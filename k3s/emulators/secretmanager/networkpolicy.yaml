@@ -1,0 +1,32 @@
+# Só o NÚCLEO fala com o emulador de segredos.
+#
+# Mesma lógica das políticas de dop-core e postgres: o emulador não tem IAM,
+# não tem autenticação e não tem TLS — qualquer pod que o alcance lê e escreve
+# QUALQUER segredo de QUALQUER conta. E o desenho da plataforma torna isso pior
+# do que parece: sandboxes de demanda rodam CÓDIGO DE AGENTE, no mesmo cluster.
+#
+# Sem esta política, o cofre do ambiente local é público para dentro do
+# namespace. A política é o que substitui, aqui, o IAM que em produção é a
+# segunda barreira do isolamento entre contas — e que nenhum teste local
+# exercita.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: secretmanager-somente-core
+  namespace: dop-local
+spec:
+  podSelector:
+    matchLabels: { app: secretmanager }
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: { app: dop-core }
+      ports:
+        - { protocol: TCP, port: 9090 }
+        - { protocol: TCP, port: 8080 }
+    # NÃO há exceção para as probes. Elas rodam por `exec` DENTRO do pod
+    # (ver deployment.yaml): abrir a 8080 para o kubelet — que sonda de fora de
+    # qualquer pod, e portanto de uma origem que não dá para restringir por
+    # podSelector — abriria o gateway REST para o namespace inteiro, que é
+    # exatamente o que esta política existe para impedir.

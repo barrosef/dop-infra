@@ -70,7 +70,12 @@ kubectl port-forward -n dop-local svc/postgres 5432:5432
 kubectl port-forward -n dop-local svc/nats 4222:4222 8222:8222
 kubectl port-forward -n dop-local svc/dop-api 8000:8000
 kubectl port-forward -n dop-local svc/dop-core 9090:9090
+kubectl port-forward -n dop-local svc/secretmanager 8085:9090   # gRPC do Secret Manager
 ```
+
+A suíte de contrato do `SecretStore` procura o emulador em `127.0.0.1:8085`
+(gRPC) — é por isso que o port-forward acima usa essa porta. Outra qualquer,
+com `SECRET_MANAGER_EMULATOR_HOST` apontando para ela.
 
 ## Verificações rápidas
 
@@ -115,6 +120,8 @@ kubectl auth can-i create secrets -n kube-system \
 | Firebase Auth | `firebase.dop-local.svc:9099` |
 | Firebase Storage | `firebase.dop-local.svc:9199` |
 | Emulator Hub / UI | `firebase.dop-local.svc:4400` / `:4000` |
+| Secret Manager (gRPC) | `secretmanager.dop-local.svc:9090` |
+| Secret Manager (REST, depuração) | `secretmanager.dop-local.svc:8080` |
 
 ## Armadilhas resolvidas na construção dos emuladores
 
@@ -166,6 +173,86 @@ readiness já havia expirado 7 vezes em duas horas de ambiente ocioso: o hub
 responde na mesma thread que atende upload. Agora são 5s, e a liveness só
 reinicia depois de 3 falhas × 20s — reiniciar por lentidão passageira apaga o
 estado de quem estiver usando.
+
+## Emulador do Secret Manager — onde ele MENTE sobre a produção
+
+`k3s/emulators/secretmanager/`, imagem
+`ghcr.io/blackwell-systems/gcp-secret-manager-emulator-dual` 1.9.0 (Apache-2.0),
+**fixada por digest** e **só para desenvolvimento**. Escrever o nosso é a
+pendência **P-17** do ROADMAP.
+
+Existe porque o Google **não publica emulador do Secret Manager** — publica de
+Storage, Pub/Sub, Firestore, Bigtable e Spanner, mas não deste. Sem ele o
+adaptador `gcp` da porta `SecretStore` só seria exercitável contra um projeto
+GCP de verdade, e a regra dos dois adaptadores da ADR-0001 seria letra morta
+justamente na porta que guarda credencial.
+
+**Leia esta lista antes de confiar num teste verde.** Cada item foi verificado
+contra o emulador rodando, e cada um é um lugar onde o ambiente local é mais
+permissivo que o GCP real — o mesmo padrão que já produziu duas falhas graves de
+segurança neste projeto (o emulador de Auth não assina token, e por isso a
+verificação de assinatura simplesmente não existia). Onde há defesa, ela está em
+`dop-core/internal/adapter/secretstore/gcp.go`, que repete esta lista.
+
+| # | O emulador | O GCP real | Defesa no adaptador |
+|---|---|---|---|
+| 1 | aceita `CreateSecret` **sem** `replication` | a referência REST marca o campo como *Required* (o `.proto`, mais novo, diz *Optional* — discordam entre si) | manda `Replication_Automatic` sempre, explícito |
+| 2 | aceita **qualquer** `secretId`: ponto, espaço, barra, maiúscula, 300 caracteres — tudo respondeu 200 | `[A-Za-z0-9_-]`, máximo 255 | valida o nome antes de cada chamada |
+| 3 | guardou um valor de **128 KiB** | 64 KiB por versão | recusa acima de 64 KiB antes de sair da máquina |
+| 4 | devolve `dataCrc32c` **sempre 0** e ignora o checksum enviado | verifica na escrita e sempre devolve na leitura | manda o CRC; na leitura só confere se vier ≠ 0. A integridade real vem da confirmação do `Put`, que compara os bytes |
+| 5 | `latest` **cai para trás**: com a v3 desabilitada e a v2 destruída, serve a **v1** | `latest` é "an alias to the most recently **created** SecretVersion", sem olhar estado — se ela estiver desabilitada/destruída, o acesso **falha** | parcial: pelo desenho, a versão de maior número está sempre habilitada. **Diverge se alguém desabilitar por fora** (console, Terraform) |
+| 6 | propagação **0 ms** | eventualmente consistente — ver abaixo | o `Put` espera o `latest` alcançar a versão nova |
+| 7 | **sem cota nenhuma** | `AddSecretVersion` 2 qps/120 qpm **por segredo**; destroy/disable 1 qps **por versão**; por projeto 90.000 acessos/min mas só **600 leituras/min e 600 escritas/min** | erro de cota vira `KindUnavailable` (retryável). Nada simula a cota |
+| 8 | **sem IAM**: qualquer chamador lê qualquer segredo | IAM é a segunda barreira do isolamento entre contas | NetworkPolicy `secretmanager-somente-core`. Nenhum teste local exercita IAM |
+| 9 | apagar e recriar o mesmo nome funciona no ato | `DeleteSecret` é irreversível e imediato, mas os metadados são eventualmente consistentes: recriar em seguida pode dar `AlreadyExists` | nenhuma. A suíte de contrato faz exatamente esse ciclo |
+| 10 | **não persiste**: o `/data` da imagem fica vazio, não há flag de import/export e um restart apaga tudo | durável | nenhuma — por isso o manifesto é `Deployment` sem PVC, e não `StatefulSet` como o do Firebase |
+
+**Consequência do item 10:** ao reiniciar o pod do emulador, **toda credencial
+gravada no ambiente local some**. Não é bug; é o que este emulador é.
+
+### O caso mais grave: leitura-após-escrita
+
+A porta `SecretStore` promete, na garantia 1, que um `Get` logo depois de um
+`Put` devolve o valor gravado. O Google documenta o contrário, em
+<https://cloud.google.com/secret-manager/docs/reference/consistency>:
+
+> "adding a secret version and then immediately accessing that secret version
+> **by version number** is a strongly consistent operation" — e — "This doesn't
+> apply when you access a secret version using aliases or `latest`". "Other
+> operations within Secret Manager are eventually consistent", convergindo
+> "typically within minutes, but may take a few hours".
+
+O único caminho fortemente consistente exige carregar o **número da versão**, e
+`ports.SecretRef` não tem onde guardá-lo — versionamento está fora da porta de
+propósito. Ou seja: **no GCP real, um `Get` logo depois de um `Put` pode
+legitimamente devolver `(nil, nil)`**, que pela porta significa "não existe". A
+credencial recém-gravada apareceria como ausente.
+
+No emulador isso **nunca acontece**, e o subteste
+`1_leitura_apos_escrita_imediata` passa em 0,01 s. É o exemplo mais claro de
+teste verde que não prova nada.
+
+O que o adaptador faz enquanto isso: confirma a gravação por número (forte,
+sempre funciona) e depois **espera o alias `latest` alcançar a versão nova**,
+com teto em `SECRET_PROPAGATION_SECONDS` (padrão 30 s). O `Put` não retorna
+antes. Se não convergir, devolve `KindUnavailable` dizendo exatamente isso — um
+`Put` lento e um erro explícito são melhores que um `Get` silencioso devolvendo
+"não existe". **Não é conserto**: é a decisão de arquitetura ficando visível até
+alguém tomá-la (ou a porta devolve identificador de versão no `Put`, ou a
+garantia 1 muda de redação).
+
+### O que a suíte de contrato NÃO cobre
+
+Descoberto quebrando garantias de propósito e vendo o que passava:
+
+- **`Put` destruir o valor anterior não é verificado.** Removendo a destruição
+  das versões antigas, os sete subtestes continuam verdes: o subteste 4 só
+  confere que o `Get` devolve o valor novo, e não que o antigo deixou de ser
+  legível. No GCP real o valor antigo continuaria acessível por número de
+  versão — "rotacionei a credencial vazada" significando coisas diferentes em
+  cada adaptador.
+- **Isolamento por IAM não é verificado** (item 8 da tabela). O que a suíte
+  prova sobre a garantia 5 é só a metade que vive no nome.
 
 ## Acesso sem port-forward
 

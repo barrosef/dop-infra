@@ -6,6 +6,7 @@ resources:
   - ../../services/postgres
   - ../../services/nats
   - ../../emulators/firebase
+  - ../../emulators/secretmanager
   - ../../services/dop-core
   - ../../services/dop-api
 labels:

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: secretmanager
+spec:
+  selector: { app: secretmanager }
+  ports:
+    # grpc é o que o dop-core usa: a biblioteca oficial do Secret Manager fala
+    # gRPC. O gateway REST fica exposto para depuração com curl.
+    - { name: grpc, port: 9090, targetPort: 9090 }
+    - { name: http, port: 8080, targetPort: 8080 }
