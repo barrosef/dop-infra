@@ -24,7 +24,7 @@ spec:
         - name: dop-core
           # Tag versionada, nunca :latest nem tag reaproveitada — reconstruir com
           # a mesma tag não garante que o pod puxe a camada nova.
-          image: dop-registry:5000/dop/dop-core:0.1.0-3
+          image: dop-registry:5000/dop/dop-core:0.1.0-4
           args: ["serve"]
           ports:
             - { name: grpc,   containerPort: 9090 }

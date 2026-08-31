@@ -15,8 +15,8 @@ REPOS    := ../
 # TAG VERSIONADA, sempre. Reconstruir com a mesma tag NÃO garante que o pod puxe
 # a camada nova: o kubelet vê o mesmo nome e reaproveita o que já tem em cache.
 # Ao mudar código: incremente aqui E na `image:` do Deployment correspondente.
-CORE_TAG := 0.1.0-3
-API_TAG  := 0.1.0-1
+CORE_TAG := 0.1.0-4
+API_TAG  := 0.1.0-2
 
 .PHONY: guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
         images image-core image-api rollout
