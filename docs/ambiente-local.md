@@ -132,6 +132,55 @@ Registradas porque custaram tempo e voltariam a custar:
 5. **Tag de imagem versionada** (`14.24.0-2`) — reconstruir com a mesma tag não garante
    que o pod puxe a nova camada.
 
+## Limites conhecidos do emulador de Storage
+
+Descobertos rodando a suíte de contrato do `ObjectStore` contra ele. Nenhum é
+defeito do nosso adaptador: o adaptador de sistema de arquivos passa nos 13
+subtestes, e o GCS de verdade aceita os dois casos abaixo.
+
+1. **Pendura com `Content-Type: application/json`.** Com `uploadType=media` e
+   esse tipo EXATO, o emulador nunca responde — a conexão fica aberta até o
+   timeout do cliente. Reproduzível com curl, mesmo corpo:
+
+   | Content-Type | Resposta |
+   |---|---|
+   | `application/json` | **pendura** |
+   | `application/json; charset=utf-8` | 400 |
+   | `text/plain`, `text/json`, `application/xml`, `application/octet-stream` | 200 |
+
+   Consequência prática: **guardar JSON no object store pendura no ambiente
+   local**. Quem precisar disso antes de o emulador corrigir deve gravar com um
+   tipo que ele aceite.
+
+2. **Cai sob concorrência.** Cerca de 16 operações simultâneas derrubam o
+   processo (sai com código 2 e o pod reinicia — dá para ver o contador de
+   restart subir no exato momento). Pelo Ingress o sintoma é 502 do Traefik;
+   por port-forward, "connection refused" — dois disfarces da mesma queda.
+
+O alvo `make test-contract-integration` do dop-core exclui esses dois subtestes,
+imprimindo o motivo. A alternativa seria deixá-los vermelhos para sempre, e
+suíte cronicamente vermelha é suíte que ninguém lê.
+
+**Probes afrouxadas por causa disso.** `timeoutSeconds` era o padrão de 1s, e a
+readiness já havia expirado 7 vezes em duas horas de ambiente ocioso: o hub
+responde na mesma thread que atende upload. Agora são 5s, e a liveness só
+reinicia depois de 3 falhas × 20s — reiniciar por lentidão passageira apaga o
+estado de quem estiver usando.
+
+## Acesso sem port-forward
+
+Os emuladores também respondem pelo loadbalancer do k3d, via Ingress:
+
+```
+http://auth.localtest.me:8080      → emulador de Auth    (9099)
+http://storage.localtest.me:8080   → emulador de Storage (9199)
+```
+
+`localtest.me` é um domínio público que resolve para 127.0.0.1; sem DNS, use
+`curl --resolve` ou o header `Host`. Prefira este caminho ao `kubectl
+port-forward`: o port-forward cai sob rajada de conexões, e o teste então falha
+por motivo errado — inventando defeito de adaptador onde não há.
+
 ## Armadilhas resolvidas ao subir dop-core e dop-api
 
 1. **A CA do cluster não está no bundle público.** O `SecretStore` do core fala com

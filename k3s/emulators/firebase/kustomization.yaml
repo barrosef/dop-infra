@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - statefulset.yaml
   - service.yaml
+  - ingress.yaml
 # ADR-0020 §3: a config do emulador é a MESMA do deploy — arquivos versionados
 # no repositório, montados read-only. Emulador com config própria mente sobre a produção.
 configMapGenerator:

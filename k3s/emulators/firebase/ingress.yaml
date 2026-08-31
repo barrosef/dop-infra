@@ -1,0 +1,27 @@
+# Emulador acessível pelo loadbalancer do k3d (localhost:8080), sem port-forward.
+#
+# O port-forward do kubectl não sobrevive a rajada concorrente: as suítes de
+# contrato do object store derrubam a conexão e o teste falha por motivo errado,
+# escondendo (ou inventando) defeito de adaptador. O caminho pelo Ingress é o
+# mesmo que a aplicação usa, e é estável.
+#
+# Roteia por HOST porque um Ingress só escuta 80/443: o caminho não distingue
+# auth de storage, mas o host sim.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: firebase-emulators
+  namespace: dop-local
+spec:
+  ingressClassName: traefik
+  rules:
+    # localtest.me resolve para 127.0.0.1 — quando não houver DNS, use
+    # curl --resolve ou o header Host.
+    - host: auth.localtest.me
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: firebase, port: { number: 9099 } } } }
+    - host: storage.localtest.me
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: firebase, port: { number: 9199 } } } }

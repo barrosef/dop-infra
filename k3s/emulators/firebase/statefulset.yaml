@@ -58,10 +58,19 @@ spec:
             initialDelaySeconds: 20
             periodSeconds: 5
             failureThreshold: 30
+            # 1s (o padrão) é apertado demais: o hub responde na mesma thread
+            # que atende upload, e sob carga a probe expirava com o emulador
+            # perfeitamente vivo — visto 7 vezes em 2h de ambiente ocioso.
+            timeoutSeconds: 5
           livenessProbe:
             httpGet: { path: /emulators, port: 4400 }
             initialDelaySeconds: 90
             periodSeconds: 20
+            timeoutSeconds: 5
+            # Reiniciar o emulador por lentidão passageira apaga o estado em
+            # memória de quem estiver usando. Só reinicia se ele estiver mudo
+            # de verdade: 3 falhas × 20s = um minuto sem responder.
+            failureThreshold: 3
       volumes:
         - name: config
           configMap: { name: firebase-config }
