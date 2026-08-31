@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+data:
+  01-extensions.sql: |
+    -- pgvector: busca semântica das memórias do conhecimento (ADR-0018)
+    CREATE EXTENSION IF NOT EXISTS vector;
+    -- pg_trgm: busca textual em nomes/handles
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    -- geração de identificadores no banco
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;

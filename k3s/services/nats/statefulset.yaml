@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats
+spec:
+  serviceName: nats
+  replicas: 1
+  selector:
+    matchLabels: { app: nats }
+  template:
+    metadata:
+      labels: { app: nats }
+    spec:
+      containers:
+        - name: nats
+          image: nats:2.12-alpine
+          args: ["-c", "/etc/nats/nats.conf"]
+          ports:
+            - { name: client,  containerPort: 4222 }
+            - { name: monitor, containerPort: 8222 }
+          volumeMounts:
+            - { name: config, mountPath: /etc/nats }
+            - { name: data,   mountPath: /data }
+          resources:
+            requests: { memory: "48Mi",  cpu: "50m" }
+            limits:   { memory: "256Mi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 8222 }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: 8222 }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+      volumes:
+        - name: config
+          configMap: { name: nats-config }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 2Gi } }
