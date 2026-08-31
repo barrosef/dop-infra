@@ -1,12 +1,21 @@
 # Ambiente local — notas de operação
 
-## Ciclo de vida do cluster
+## Ciclo de vida
 
 ```bash
-k3d cluster stop dop-local     # para, libera memória, preserva dados
-k3d cluster start dop-local    # retoma
-k3d cluster delete dop-local   # destrói (PVCs incluídos)
+make cluster-up          # cria do zero
+make up                  # aplica o ambiente
+make cluster-stop        # para, libera memória, preserva dados
+k3d cluster start dop-local
+make reset               # apaga os dados (PVCs), mantém o cluster
+make cluster-rm          # destrói tudo
 ```
+
+Por que não há `dev.sh`: num ambiente `docker compose` seria preciso script para criar
+diretório de dados, importar condicionalmente, aguardar prontidão e resetar volume
+root-owned. Em Kubernetes isso é PVC, `if` no `command` do pod, `readinessProbe`,
+`terminationGracePeriodSeconds` e `kubectl delete pvc` — tudo declarativo. Sobra a guarda
+de contexto, que vive no `Makefile`.
 
 ## Consumo medido (2026-08-30, cluster + postgres + nats)
 
@@ -40,7 +49,7 @@ kubectl exec -n dop-local nats-0 -- wget -qO- http://localhost:8222/jsz
 
 ## Pendências
 
-- Emuladores Firebase (auth :9099, storage :9199) — ADR-0020, com `--export-on-exit`,
-  `--import` condicional e `terminationGracePeriodSeconds: 30`.
-- `dev.sh` com `start/stop/status/logs/reset` por serviço e a guarda de contexto.
+- Emuladores Firebase (auth :9099, storage :9199) — ADR-0020: `--export-on-exit` +
+  `--import` condicional no `command`, PVC para os dados e
+  `terminationGracePeriodSeconds: 30`.
 - k9s como interface de inspeção.
