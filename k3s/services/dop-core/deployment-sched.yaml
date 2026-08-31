@@ -1,0 +1,48 @@
+# Modo sched — tarefas periódicas: polling de PRs, suspensão de sandbox,
+# manutenção de partições.
+#
+# Réplica ÚNICA por desenho: duas instâncias disparariam a mesma tarefa duas
+# vezes. Quando precisar de HA, o caminho é eleição de líder, não replicas: 2.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dop-core-sched
+spec:
+  replicas: 1
+  strategy:
+    # Recreate, não RollingUpdate: durante um rollout o padrão subiria o pod
+    # novo antes de derrubar o velho, e por alguns segundos haveria DOIS
+    # schedulers ativos.
+    type: Recreate
+  selector:
+    matchLabels: { app: dop-core, mode: sched }
+  template:
+    metadata:
+      labels: { app: dop-core, mode: sched }
+    spec:
+      serviceAccountName: dop-core
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: dop-core
+          image: dop-registry:5000/dop/dop-core:0.1.0-3
+          args: ["sched"]
+          ports:
+            - { name: health, containerPort: 9091 }
+          envFrom:
+            - configMapRef: { name: dop-core-env }
+            - secretRef:    { name: dop-core }
+          resources:
+            requests: { memory: "48Mi",  cpu: "25m" }
+            limits:   { memory: "192Mi", cpu: "250m" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 15
+            periodSeconds: 15

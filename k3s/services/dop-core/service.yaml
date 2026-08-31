@@ -1,0 +1,14 @@
+# Aponta SÓ para os pods do modo serve: é o único que atende gRPC. Um seletor
+# apenas por `app: dop-core` mandaria requisição para worker e sched, que não
+# escutam na 9090 — e o sintoma seria intermitente, o pior tipo.
+apiVersion: v1
+kind: Service
+metadata:
+  name: dop-core
+spec:
+  selector:
+    app: dop-core
+    mode: serve
+  ports:
+    - { name: grpc,   port: 9090, targetPort: 9090 }
+    - { name: health, port: 9091, targetPort: 9091 }

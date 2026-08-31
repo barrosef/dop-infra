@@ -9,6 +9,7 @@ Infraestrutura da plataforma DOP: Terraform (QA/stage/prod) e ambiente local em 
 
 ```bash
 make cluster-up     # cria o cluster k3d
+make images         # constrói e publica dop-core e dop-api no registry local
 make up             # aplica o ambiente
 make status         # pods, PVCs e services
 ```
@@ -29,10 +30,20 @@ kubeconfig — a guarda não é conveniência.
 | `make status` | pods, PVCs, services |
 | `make logs C=postgres` | logs de um componente |
 | `make ui` | abre o k9s no namespace |
+| `make images` | constrói e publica `dop-core` e `dop-api` no registry local |
+| `make image-core` / `image-api` | idem, um componente só |
+| `make rollout` | espera os Deployments dos nossos componentes ficarem prontos |
 | `make cluster-up` / `cluster-stop` / `cluster-rm` | ciclo de vida do cluster |
+
+**Imagem alterada exige tag nova.** `CORE_TAG` e `API_TAG` no `Makefile`, e a
+`image:` do Deployment correspondente, sobem juntos. Reconstruir com a mesma tag
+não garante que o pod puxe a camada nova — armadilha registrada em
+`docs/ambiente-local.md`.
 
 | Componente | Endereço interno | Host |
 |---|---|---|
+| dop-core `serve` (gRPC) | `dop-core.dop-local.svc:9090` · health `:9091` | `kubectl port-forward` |
+| dop-api (BFF, REST+SSE) | `dop-api.dop-local.svc:8000` | idem |
 | PostgreSQL 17 + pgvector | `postgres.dop-local.svc:5432` | `kubectl port-forward` |
 | NATS JetStream | `nats.dop-local.svc:4222` · monitor `:8222` | idem |
 | Firebase Auth | `firebase.dop-local.svc:9099` | idem |
@@ -68,7 +79,32 @@ terraform/
 └── stacks/platform/    ÚNICO root module + envs/{qa,stage,prod}.tfvars
 k3s/
 ├── base/               namespace
-├── services/           postgres · nats
+├── services/           postgres · nats · dop-core · dop-api
 ├── emulators/          firebase (auth + storage)
 └── overlays/local/     composição do ambiente local
 ```
+
+## Os nossos componentes no cluster
+
+**dop-core** — UMA imagem, QUATRO modos (ADR-0016); o modo é o argumento do
+container. Três Deployments hoje:
+
+| Deployment | args | o que faz |
+|---|---|---|
+| `dop-core-serve` | `serve` | gRPC do domínio na `:9090` |
+| `dop-core-worker` | `worker` | consumidores de evento, projeções e relay do outbox |
+| `dop-core-sched` | `sched` | tarefas periódicas — réplica única, estratégia `Recreate` |
+
+O quarto modo, **`launcher`**, ficou de fora: é daemon do cluster de **execução**
+(provisiona sandboxes), que no ambiente local ainda não existe. Entra quando
+houver cluster de execução para ele governar.
+
+O core tem **ServiceAccount própria** com `Role` (nunca `ClusterRole`) sobre
+`secrets` **só neste namespace** — o adaptador de `SecretStore` guarda credencial
+na API do Kubernetes (ADR-0001), e um `ClusterRole` faria o raio de explosão de um
+bug no adaptador ser o cluster inteiro.
+
+**dop-api** — o BFF, `:8000`. Sem ServiceAccount (`automountServiceAccountToken:
+false`) e sem credencial de banco: ele não fala com o Postgres, fala com o core.
+A probe usa `/healthz`, que é `@public` — qualquer outra rota devolveria 401 para
+uma sonda sem token.

@@ -6,6 +6,8 @@ resources:
   - ../../services/postgres
   - ../../services/nats
   - ../../emulators/firebase
+  - ../../services/dop-core
+  - ../../services/dop-api
 labels:
   - pairs:
       app.kubernetes.io/part-of: dop

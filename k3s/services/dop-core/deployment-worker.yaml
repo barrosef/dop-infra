@@ -1,0 +1,41 @@
+# Modo worker — consome eventos do NATS, constrói projeções e roda o relay do
+# outbox (ADR-0019): é ele que leva o evento gravado na transação até o broker.
+# MESMA imagem do serve; só o argumento muda.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dop-core-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: dop-core, mode: worker }
+  template:
+    metadata:
+      labels: { app: dop-core, mode: worker }
+    spec:
+      serviceAccountName: dop-core
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 1001
+        runAsNonRoot: true
+        fsGroup: 0
+      containers:
+        - name: dop-core
+          image: dop-registry:5000/dop/dop-core:0.1.0-3
+          args: ["worker"]
+          ports:
+            - { name: health, containerPort: 9091 }
+          envFrom:
+            - configMapRef: { name: dop-core-env }
+            - secretRef:    { name: dop-core }
+          resources:
+            requests: { memory: "64Mi",  cpu: "50m" }
+            limits:   { memory: "256Mi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /healthz, port: health }
+            initialDelaySeconds: 15
+            periodSeconds: 15

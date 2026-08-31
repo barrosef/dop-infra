@@ -1,0 +1,18 @@
+# O BFF não tem banco (ADR-0016): nenhuma credencial de Postgres aqui, nem
+# "só para uma consulta rápida". Todo estado vem do core por gRPC.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dop-api-env
+data:
+  # Service do core; aponta só para os pods do modo serve.
+  CORE_GRPC: dop-core.dop-local.svc:9090
+
+  FIREBASE_AUTH_EMULATOR_HOST: firebase.dop-local.svc:9099
+  # O SDK do Cloud Storage lê STORAGE_EMULATOR_HOST; o CLI do Firebase expõe
+  # esta. A ponte entre as duas é feita no boot do BFF (ADR-0020 §4) — sem ela,
+  # upload local iria para o bucket REAL.
+  FIREBASE_STORAGE_EMULATOR_HOST: firebase.dop-local.svc:9199
+  FIREBASE_PROJECT: dop-local
+
+  LOG_LEVEL: info
