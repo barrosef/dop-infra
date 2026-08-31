@@ -15,10 +15,11 @@ REPOS    := ../
 # TAG VERSIONADA, sempre. Reconstruir com a mesma tag NÃO garante que o pod puxe
 # a camada nova: o kubelet vê o mesmo nome e reaproveita o que já tem em cache.
 # Ao mudar código: incremente aqui E na `image:` do Deployment correspondente.
+DEVBOX_TAG := 0.1.0
 CORE_TAG := 0.1.0-4
 API_TAG  := 0.1.0-2
 
-.PHONY: guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
+.PHONY: image-devbox guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
         images image-core image-api rollout
 
 ## guard: recusa qualquer operação fora do cluster local.
@@ -56,6 +57,10 @@ ui: guard                     ## abre o k9s no namespace do ambiente
 ## Não precisam da guarda: `docker push` fala com o registry, não com o cluster.
 
 images: image-core image-api ## constrói e publica dop-core e dop-api no registry
+
+image-devbox:                 ## imagem do sandbox onde o agente trabalha
+	docker build -t $(REGISTRY)/dop/devbox:$(DEVBOX_TAG) $(CURDIR)/images/devbox
+	docker push $(REGISTRY)/dop/devbox:$(DEVBOX_TAG)
 
 image-core:                   ## constrói e publica a imagem do core
 	docker build -t $(REGISTRY)/dop/dop-core:$(CORE_TAG) \
