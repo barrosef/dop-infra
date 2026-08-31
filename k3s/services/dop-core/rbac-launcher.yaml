@@ -1,0 +1,55 @@
+# RBAC do LAUNCHER de sandbox — separado do rbac.yaml de propósito.
+#
+# O adaptador de SecretStore vive com um Role namespaced, e é assim que deve
+# continuar. O launcher precisa de mais, porque cria um namespace POR DEMANDA:
+# `namespaces` e `runtimeclasses` não existem dentro de namespace nenhum, então
+# aqui não há como evitar ClusterRole.
+#
+# Este arquivo NÃO entra no overlay local por padrão: enquanto `RegisterLauncher`
+# for esqueleto, conceder essas permissões seria ampliar o raio de explosão sem
+# nada em troca. Habilite junto com o launcher.
+#
+# `runtimeclasses` merece explicação: sem `list`, o adaptador não consegue
+# provar QUAL isolamento o cluster oferece, e `SupportedTiers` devolve
+# PermissionDenied de propósito. Responder "este cluster não tem Kata" quando na
+# verdade não sabemos olhar seria a degradação silenciosa que a ADR-0001 proíbe,
+# disfarçada de RBAC.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dop-core-launcher
+rules:
+  # Um namespace por demanda; Destroy apaga o namespace inteiro para não deixar
+  # órfão. Sem `delete`, sandbox destruído viraria lixo acumulando no cluster.
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["create", "get", "delete"]
+  # A execução do sandbox e a cauda de log.
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["create", "get", "delete"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  # O workspace que sobrevive à suspensão — é a única coisa que a garantia 5 da
+  # porta promete preservar.
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["create", "get"]
+  # Só `list`: descobrir o que o cluster oferece, nunca criar RuntimeClass.
+  - apiGroups: ["node.k8s.io"]
+    resources: ["runtimeclasses"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dop-core-launcher
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dop-core-launcher
+subjects:
+  - kind: ServiceAccount
+    name: dop-core
+    namespace: dop-local
