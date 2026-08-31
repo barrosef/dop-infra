@@ -28,12 +28,16 @@ kubeconfig — a guarda não é conveniência.
 | `make reset` | apaga os PVCs (dados) sem destruir o cluster |
 | `make status` | pods, PVCs, services |
 | `make logs C=postgres` | logs de um componente |
+| `make ui` | abre o k9s no namespace |
 | `make cluster-up` / `cluster-stop` / `cluster-rm` | ciclo de vida do cluster |
 
 | Componente | Endereço interno | Host |
 |---|---|---|
 | PostgreSQL 17 + pgvector | `postgres.dop-local.svc:5432` | `kubectl port-forward` |
 | NATS JetStream | `nats.dop-local.svc:4222` · monitor `:8222` | idem |
+| Firebase Auth | `firebase.dop-local.svc:9099` | idem |
+| Firebase Storage | `firebase.dop-local.svc:9199` | idem |
+| Emulator Hub / UI | `firebase.dop-local.svc:4400` / `:4000` | idem |
 | Ingress (Traefik) | — | `localhost:8080` / `:8443` |
 | Registry de imagens | `dop-registry:5000` | `localhost:5111` |
 

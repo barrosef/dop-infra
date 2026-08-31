@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: firebase
+spec:
+  serviceName: firebase
+  replicas: 1
+  selector:
+    matchLabels: { app: firebase }
+  template:
+    metadata:
+      labels: { app: firebase }
+    spec:
+      # ADR-0020 §2: tempo para o --export-on-exit concluir.
+      # Sem isso o SIGKILL chega antes do export e os dados se perdem AO PARAR.
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsUser: 1001
+        fsGroup: 0
+      containers:
+        - name: firebase
+          image: dop-registry:5000/dop/firebase-emulators:14.24.0-2
+          workingDir: /app
+          # ADR-0020 §2: --import é CONDICIONAL — passar a flag sem o diretório
+          # existir faz o emulador falhar no primeiro start.
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+              IMPORT_FLAG=""
+              if [ -d /emulator-data/saved ] && [ -n "$(ls -A /emulator-data/saved 2>/dev/null)" ]; then
+                echo "[emuladores] importando dados de /emulator-data/saved"
+                IMPORT_FLAG="--import /emulator-data/saved"
+              else
+                echo "[emuladores] sem dados salvos — iniciando do zero"
+              fi
+              exec firebase emulators:start \
+                --project dop-local \
+                --only auth,storage \
+                --export-on-exit /emulator-data/saved \
+                $IMPORT_FLAG
+          ports:
+            - { name: ui,      containerPort: 4000 }
+            - { name: hub,     containerPort: 4400 }
+            - { name: auth,    containerPort: 9099 }
+            - { name: storage, containerPort: 9199 }
+          volumeMounts:
+            - { name: data,   mountPath: /emulator-data }
+            - { name: config, mountPath: /app/firebase.json,  subPath: firebase.json,  readOnly: true }
+            - { name: config, mountPath: /app/storage.rules,  subPath: storage.rules,  readOnly: true }
+            - { name: config, mountPath: /app/.firebaserc,    subPath: firebaserc,     readOnly: true }
+          resources:
+            requests: { memory: "384Mi", cpu: "100m" }
+            limits:   { memory: "1Gi",   cpu: "1500m" }
+          readinessProbe:
+            # o hub existe sempre; a UI depende de haver emulador com UI
+            httpGet: { path: /emulators, port: 4400 }
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /emulators, port: 4400 }
+            initialDelaySeconds: 90
+            periodSeconds: 20
+      volumes:
+        - name: config
+          configMap: { name: firebase-config }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources: { requests: { storage: 2Gi } }

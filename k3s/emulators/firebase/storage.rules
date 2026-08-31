@@ -1,0 +1,10 @@
+rules_version = '2';
+// Regras do EMULADOR LOCAL. Em produção, o acesso ao bucket é sempre
+// intermediado pelo core via URL assinada — o cliente nunca fala direto.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

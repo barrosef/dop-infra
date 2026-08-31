@@ -5,6 +5,7 @@ resources:
   - ../../base
   - ../../services/postgres
   - ../../services/nats
+  - ../../emulators/firebase
 labels:
   - pairs:
       app.kubernetes.io/part-of: dop

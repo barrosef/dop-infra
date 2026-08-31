@@ -6,7 +6,7 @@ CONTEXT  := k3d-$(CLUSTER)
 NS       := dop-local
 OVERLAY  := k3s/overlays/local
 
-.PHONY: guard up down reset status logs cluster-up cluster-stop cluster-rm
+.PHONY: guard up down reset status logs ui cluster-up cluster-stop cluster-rm
 
 ## guard: recusa qualquer operação fora do cluster local.
 ## Esta máquina tem contextos de produção de clientes no kubeconfig.
@@ -32,6 +32,9 @@ status: guard                 ## visão rápida do ambiente
 
 logs: guard                   ## logs de um componente: make logs C=postgres
 	kubectl logs -f -n $(NS) sts/$(C)
+
+ui: guard                     ## abre o k9s no namespace do ambiente
+	k9s -n $(NS) --context $(CONTEXT)
 
 cluster-up:                   ## cria o cluster k3d do zero
 	k3d cluster create $(CLUSTER) \
