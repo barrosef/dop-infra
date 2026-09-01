@@ -21,6 +21,13 @@ spec:
       http:
         paths:
           - { path: /, pathType: Prefix, backend: { service: { name: firebase, port: { number: 9099 } } } }
+    # O cockpit servido pelo emulador de HOSTING — o mesmo caminho que ele terá
+    # no Firebase Hosting de verdade, com rewrite de SPA, headers de cache e
+    # `/__/firebase/init.js`. Publicar aqui é `make deploy-app`.
+    - host: app.localtest.me
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: firebase, port: { number: 5000 } } } }
     - host: storage.localtest.me
       http:
         paths:

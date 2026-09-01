@@ -34,9 +34,17 @@ spec:
               else
                 echo "[emuladores] sem dados salvos — iniciando do zero"
               fi
+              # O Hosting recusa subir se `site` não existir. Criar vazio faz o
+              # ambiente subir ANTES de qualquer deploy do cockpit — e um 404
+              # é diagnóstico honesto ("nada publicado"), diferente de um pod
+              # que não sobe.
+              mkdir -p /emulator-data/site
+              [ -f /emulator-data/site/index.html ] || \
+                echo '<!doctype html><meta charset=utf-8><title>DOP</title><p>Nada publicado ainda — rode <code>make deploy-app</code> no dop-infra.' \
+                  > /emulator-data/site/index.html
               exec firebase emulators:start \
                 --project dop-local \
-                --only auth,storage \
+                --only auth,storage,hosting \
                 --export-on-exit /emulator-data/saved \
                 $IMPORT_FLAG
           ports:
@@ -44,8 +52,13 @@ spec:
             - { name: hub,     containerPort: 4400 }
             - { name: auth,    containerPort: 9099 }
             - { name: storage, containerPort: 9199 }
+            - { name: hosting, containerPort: 5000 }
           volumeMounts:
             - { name: data,   mountPath: /emulator-data }
+            # O site publicado mora no PVC, não num emptyDir: `firebase deploy`
+            # de verdade sobrevive a restart, e aqui também precisa sobreviver —
+            # senão todo reinício do pod desfaz o deploy sem avisar.
+            - { name: data,   mountPath: /app/site, subPath: site }
             - { name: config, mountPath: /app/firebase.json,  subPath: firebase.json,  readOnly: true }
             - { name: config, mountPath: /app/storage.rules,  subPath: storage.rules,  readOnly: true }
             - { name: config, mountPath: /app/.firebaserc,    subPath: firebaserc,     readOnly: true }

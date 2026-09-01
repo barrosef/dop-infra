@@ -12,6 +12,13 @@ OVERLAY  := k3s/overlays/local
 REGISTRY := localhost:5111
 REPOS    := ../
 
+# Endereços do ambiente local, pelo loadbalancer do k3d (porta 8080). Ficam em
+# variável porque as VITE_* são embutidas no bundle: quem mudar o host precisa
+# mudar AQUI e reconstruir, não só no manifesto.
+APP_BASE      := http://app.localtest.me:8080
+APP_API_BASE  := http://api.localtest.me:8080
+APP_AUTH_BASE := http://auth.localtest.me:8080
+
 # TAG VERSIONADA, sempre. Reconstruir com a mesma tag NÃO garante que o pod puxe
 # a camada nova: o kubelet vê o mesmo nome e reaproveita o que já tem em cache.
 # Ao mudar código: incremente aqui E na `image:` do Deployment correspondente.
@@ -52,6 +59,28 @@ logs: guard
 
 ui: guard                     ## abre o k9s no namespace do ambiente
 	k9s -n $(NS) --context $(CONTEXT)
+
+.PHONY: deploy-app
+deploy-app: guard             ## constrói o cockpit e publica no Hosting emulado
+	@# O análogo local de `firebase deploy --only hosting`: NÃO há imagem Docker
+	@# do frontend, nem em produção nem aqui. Hosting serve arquivo estático.
+	@#
+	@# As VITE_* entram na BUILD porque o Vite as substitui no bundle — mudá-las
+	@# depois exige reconstruir, e isso vale igual no Firebase Hosting real.
+	@# PORT e BASE_PATH são exigidos pelo vite.config.ts (herança do Replit).
+	@# PORT não afeta build nenhum — só o dev server —, mas o config aborta sem
+	@# ele. BASE_PATH é `/` porque o Hosting publica na RAIZ do domínio.
+	PORT=5173 BASE_PATH=/ \
+	VITE_API_BASE_URL=$(APP_API_BASE) \
+	VITE_FIREBASE_AUTH_EMULATOR_URL=$(APP_AUTH_BASE) \
+	VITE_FIREBASE_PROJECT_ID=dop-local \
+	VITE_FIREBASE_API_KEY=fake-api-key \
+	  pnpm -C $(REPOS)dop-app/artifacts/dop build
+	@pod=$$(kubectl get pod -n $(NS) -l app=firebase -o jsonpath='{.items[0].metadata.name}'); \
+	 echo "publicando em $$pod:/app/site"; \
+	 kubectl exec -n $(NS) $$pod -- sh -c 'rm -rf /app/site/* /app/site/.[!.]* 2>/dev/null; true'; \
+	 kubectl cp $(REPOS)dop-app/artifacts/dop/dist/public/. $(NS)/$$pod:/app/site/
+	@echo "publicado: $(APP_BASE)"
 
 .PHONY: token-ui
 token-ui: guard               ## token de acesso do Headlamp (http://k8s.localtest.me:8080)

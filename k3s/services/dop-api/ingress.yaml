@@ -1,0 +1,22 @@
+# O BFF por host próprio.
+#
+# Necessário desde que o cockpit passou a ser servido pelo emulador de Hosting:
+# a página vem de `app.localtest.me` e chama a API por URL ABSOLUTA (decisão de
+# produto — sem rewrite do Hosting), então a API precisa de um endereço estável
+# que o BROWSER alcance. `localhost:8000` via port-forward serviria, mas amarra
+# o cockpit a um túnel que cai.
+#
+# Origem diferente significa CORS de verdade no caminho — o que é justamente o
+# que se quer exercitar aqui, porque em produção será igual.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dop-api
+  namespace: dop-local
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: api.localtest.me
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: dop-api, port: { number: 8000 } } } }

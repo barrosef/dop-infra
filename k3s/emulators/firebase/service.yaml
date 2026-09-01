@@ -9,3 +9,4 @@ spec:
     - { name: hub,     port: 4400, targetPort: 4400 }
     - { name: auth,    port: 9099, targetPort: 9099 }
     - { name: storage, port: 9199, targetPort: 9199 }
+    - { name: hosting, port: 5000, targetPort: 5000 }

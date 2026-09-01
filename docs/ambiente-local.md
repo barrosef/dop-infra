@@ -45,6 +45,54 @@ Ambas rodam como **usuário arbitrário não-root** (requisito OKD/OpenShift): a
 permissão vive no grupo 0, nunca num usuário nomeado — o OKD atribui um UID que
 não existe em `/etc/passwd`.
 
+## O cockpit no emulador de Hosting
+
+**Firebase Hosting não usa imagem Docker** — nem em produção nem aqui. Em
+produção é `firebase deploy --only hosting` mandando arquivo estático para o
+CDN do Google. O análogo local é:
+
+```bash
+make deploy-app        # constrói o cockpit e publica em app.localtest.me:8080
+```
+
+Ele roda o `vite build` e copia o `dist/public` para dentro do pod do emulador.
+O site mora no PVC (não num `emptyDir`), então sobrevive a restart do pod — do
+mesmo jeito que um deploy de verdade sobrevive.
+
+| endereço | o quê |
+|---|---|
+| `http://app.localtest.me:8080` | cockpit PUBLICADO, pelo emulador de Hosting |
+| `http://api.localtest.me:8080` | BFF |
+| `http://auth.localtest.me:8080` | emulador de Auth |
+| `http://storage.localtest.me:8080` | emulador de Storage |
+| `http://k8s.localtest.me:8080` | Headlamp (token em `make token-ui`) |
+| `http://localhost:4000` | UI do emulador — **sem ingress**, exige port-forward |
+
+**Isto não substitui o `pnpm dev`.** O laço rápido de quem mexe na tela continua
+sendo o Vite em `localhost:5173`. O Hosting emulado existe para exercitar o que
+o Vite NÃO exercita e que só quebra em produção:
+
+- *rewrite* de SPA (`/demandas/abc` precisa devolver o `index.html`, não 404);
+- headers de cache do `firebase.json` (`immutable` nos assets, `no-cache` no
+  `index.html`);
+- **CORS de verdade**, porque a página vem de `app.` e chama `api.` — duas
+  origens. Em produção será igual, já que a decisão foi chamar a API por URL
+  absoluta em vez de *rewrite* do Hosting.
+
+As duas origens (`localhost:5173` e `app.localtest.me:8080`) estão na
+`CORS_ORIGINS` do BFF. Lista fechada e não `*`: com `allow_credentials`, `*` é
+recusado pelo browser, e afrouxar aqui esconderia em desenvolvimento um erro
+que só apareceria depois.
+
+**As `VITE_*` são embutidas no bundle** pelo Vite — mudar o endereço da API
+exige reconstruir, não basta mudar o manifesto. Vale igual no Hosting real; por
+isso os endereços vivem em variável do `Makefile` (`APP_API_BASE` etc.).
+
+Aviso conhecido no boot: *"Could not fetch web app configuration"*. É o
+emulador dizendo que não alcançou o Firebase real para montar o
+`/__/firebase/init.js`. Não afeta nada aqui — o cockpit lê a configuração das
+`VITE_*`, não do `init.js`.
+
 ## Consumo medido (2026-08-31, ambiente completo)
 
 | | |

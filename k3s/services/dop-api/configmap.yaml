@@ -15,4 +15,13 @@ data:
   FIREBASE_STORAGE_EMULATOR_HOST: firebase.dop-local.svc:9199
   FIREBASE_PROJECT: dop-local
 
+  # Origens do cockpit. Duas porque são dois caminhos legítimos no ambiente
+  # local, e ambos precisam funcionar:
+  #   :5173  — `pnpm dev`, o laço rápido de quem está mexendo na tela
+  #   app.localtest.me — o cockpit PUBLICADO no emulador de Hosting, que é o
+  #                      caminho que se parece com produção
+  # Lista fechada e não `*`: com allow_credentials, `*` é recusado pelo browser,
+  # e afrouxar aqui esconderia em desenvolvimento um erro que só aparece depois.
+  CORS_ORIGINS: '["http://localhost:5173","http://app.localtest.me:8080"]'
+
   LOG_LEVEL: info
