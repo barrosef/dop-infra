@@ -50,6 +50,7 @@ não existe em `/etc/passwd`.
 | | |
 |---|---|
 | k3d server (Postgres + NATS + Firebase + dop-core ×3 + dop-api) | ~1220 MB |
+| Headlamp (UI web, opcional — `k3s/tools/headlamp`) | ~48 MB |
 | load balancer | ~10 MB |
 | registry | ~12 MB |
 | **total** | **~1,24 GB** |
@@ -307,7 +308,8 @@ por motivo errado — inventando defeito de adaptador onde não há.
 Ambiente **completo e testado**: Postgres+pgvector, NATS JetStream, emuladores
 Firebase (Auth + Storage), os três modos do `dop-core` e o `dop-api`. Persistência
 verificada por restart; log JSON verificado nas duas pontas; `serve` conectado a
-Postgres e NATS e respondendo `SERVING` no health gRPC. `make ui` abre o k9s.
+Postgres e NATS e respondendo `SERVING` no health gRPC. `make ui` abre o k9s; `http://k8s.localtest.me:8080` abre o Headlamp (token em
+`make token-ui`).
 
 Falta implantar o modo **`launcher`** do core — depende do cluster de execução,
 que ainda não existe no ambiente local.

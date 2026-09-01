@@ -16,8 +16,8 @@ REPOS    := ../
 # a camada nova: o kubelet vê o mesmo nome e reaproveita o que já tem em cache.
 # Ao mudar código: incremente aqui E na `image:` do Deployment correspondente.
 DEVBOX_TAG := 0.1.0
-CORE_TAG := 0.1.0-4
-API_TAG  := 0.1.0-2
+CORE_TAG := 0.1.0-5
+API_TAG  := 0.1.0-3
 
 .PHONY: image-devbox guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
         images image-core image-api rollout
@@ -52,6 +52,10 @@ logs: guard
 
 ui: guard                     ## abre o k9s no namespace do ambiente
 	k9s -n $(NS) --context $(CONTEXT)
+
+.PHONY: token-ui
+token-ui: guard               ## token de acesso do Headlamp (http://k8s.localtest.me:8080)
+	@kubectl create token headlamp -n $(NS) --duration=24h
 
 ## ── imagens dos nossos componentes ──────────────────────────────────────────
 ## Não precisam da guarda: `docker push` fala com o registry, não com o cluster.

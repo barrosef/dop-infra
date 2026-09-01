@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headlamp
+  namespace: dop-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: headlamp }
+  template:
+    metadata:
+      labels: { app: headlamp }
+    spec:
+      serviceAccountName: headlamp
+      # Mesma regra dos nossos componentes: usuário arbitrário não-root, com a
+      # permissão no grupo 0 (requisito OKD/OpenShift).
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+      containers:
+        - name: headlamp
+          image: ghcr.io/headlamp-k8s/headlamp:v0.45.0
+          args: ["-in-cluster", "-plugins-dir=/headlamp/plugins"]
+          ports:
+            - { name: http, containerPort: 4466 }
+          livenessProbe:
+            httpGet: { path: /, port: 4466 }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /, port: 4466 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 10m, memory: 64Mi }
+            limits:   { memory: 256Mi }

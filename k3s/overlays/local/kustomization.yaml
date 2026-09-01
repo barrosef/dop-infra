@@ -9,6 +9,9 @@ resources:
   - ../../emulators/secretmanager
   - ../../services/dop-core
   - ../../services/dop-api
+  # Ferramenta, não componente do produto: vive fora de `base` de propósito —
+  # o ServiceAccount dela é cluster-admin, e isso só vale neste overlay.
+  - ../../tools/headlamp
 labels:
   - pairs:
       app.kubernetes.io/part-of: dop

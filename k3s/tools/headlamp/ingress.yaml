@@ -1,0 +1,14 @@
+# Pelo loadbalancer do k3d, como os emuladores — ver
+# emulators/firebase/ingress.yaml para o porquê de não usar port-forward.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: headlamp
+  namespace: dop-local
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: k8s.localtest.me
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: headlamp, port: { number: 80 } } } }

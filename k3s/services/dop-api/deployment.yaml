@@ -24,7 +24,7 @@ spec:
         - name: dop-api
           # Tag versionada, nunca :latest — reconstruir com a mesma tag não
           # garante que o pod puxe a camada nova.
-          image: dop-registry:5000/dop/dop-api:0.1.0-2
+          image: dop-registry:5000/dop/dop-api:0.1.0-3
           ports:
             - { name: http, containerPort: 8000 }
           envFrom:
