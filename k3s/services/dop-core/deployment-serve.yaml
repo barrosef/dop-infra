@@ -11,9 +11,11 @@ spec:
     metadata:
       labels: { app: dop-core, mode: serve }
     spec:
-      # A ServiceAccount é o que dá ao SecretStore acesso à API do Kubernetes.
+      # The ServiceAccount is what gives the SecretStore access to the
+      # Kubernetes API.
       serviceAccountName: dop-core
-      # SIGTERM inicia o GracefulStop; este é o tempo para as chamadas em voo
+      # SIGTERM starts the GracefulStop; this is the time for the in-flight
+      # calls
       # terminarem antes do SIGKILL.
       terminationGracePeriodSeconds: 30
       securityContext:
@@ -23,7 +25,7 @@ spec:
       containers:
         - name: dop-core
           # Tag versionada, nunca :latest nem tag reaproveitada — reconstruir com
-          # a mesma tag não garante que o pod puxe a camada nova.
+          # the same tag does not guarantee the pod pulls the new layer.
           image: dop-registry:5000/dop/dop-core:0.1.0-5
           args: ["serve"]
           ports:
@@ -35,7 +37,7 @@ spec:
           resources:
             requests: { memory: "64Mi",  cpu: "50m" }
             limits:   { memory: "256Mi", cpu: "500m" }
-          # A probe usa a 9091 (HTTP), não a 9090: httpGet contra porta gRPC
+          # The probe uses 9091 (HTTP), not 9090: an httpGet against a gRPC port
           # devolve erro de protocolo e o pod nunca fica pronto.
           readinessProbe:
             httpGet: { path: /healthz, port: health }

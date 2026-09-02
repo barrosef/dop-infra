@@ -9,8 +9,8 @@ resources:
   - ../../emulators/secretmanager
   - ../../services/dop-core
   - ../../services/dop-api
-  # Ferramenta, não componente do produto: vive fora de `base` de propósito —
-  # o ServiceAccount dela é cluster-admin, e isso só vale neste overlay.
+  # A tool, not a component of the product: it lives outside `base` on purpose —
+  # its ServiceAccount is cluster-admin, and that only holds in this overlay.
   - ../../tools/headlamp
 labels:
   - pairs:

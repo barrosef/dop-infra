@@ -1,42 +1,45 @@
 # RBAC do LAUNCHER de sandbox — separado do rbac.yaml de propósito.
 #
-# O adaptador de SecretStore vive com um Role namespaced, e é assim que deve
-# continuar. O launcher precisa de mais, porque cria um namespace POR DEMANDA:
-# `namespaces` e `runtimeclasses` não existem dentro de namespace nenhum, então
-# aqui não há como evitar ClusterRole.
+# The SecretStore adapter lives with a namespaced Role, and that is how it
+# should stay. The launcher needs more, because it creates a namespace PER
+# DEMAND: `namespaces` and `runtimeclasses` exist inside no namespace, so here
+# there is no way to avoid a ClusterRole.
 #
 # Este arquivo NÃO entra no overlay local por padrão: enquanto `RegisterLauncher`
-# for esqueleto, conceder essas permissões seria ampliar o raio de explosão sem
+# is a skeleton, granting these permissions would widen the blast radius with
 # nada em troca. Habilite junto com o launcher.
 #
-# `runtimeclasses` merece explicação: sem `list`, o adaptador não consegue
+# `runtimeclasses` deserves an explanation: without `list`, the adapter cannot
 # provar QUAL isolamento o cluster oferece, e `SupportedTiers` devolve
-# PermissionDenied de propósito. Responder "este cluster não tem Kata" quando na
-# verdade não sabemos olhar seria a degradação silenciosa que a ADR-0001 proíbe,
+# PermissionDenied on purpose. Answering "this cluster has no Kata" when in
+# truth we cannot look would be the silent degradation ADR-0001 forbids,
 # disfarçada de RBAC.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: dop-core-launcher
 rules:
-  # Um namespace por demanda; Destroy apaga o namespace inteiro para não deixar
+  # One namespace per demand; Destroy erases the whole namespace so as not to
+  # leave
   # órfão. Sem `delete`, sandbox destruído viraria lixo acumulando no cluster.
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["create", "get", "delete"]
-  # A execução do sandbox e a cauda de log.
+  # The sandbox's execution and the log tail.
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["create", "get", "delete"]
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["get"]
-  # O workspace que sobrevive à suspensão — é a única coisa que a garantia 5 da
+  # The workspace that survives suspension — it is the only thing the port's
+  # guarantee 5
   # porta promete preservar.
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["create", "get"]
-  # Só `list`: descobrir o que o cluster oferece, nunca criar RuntimeClass.
+  # Only `list`: discovering what the cluster offers, never creating a
+  # RuntimeClass.
   - apiGroups: ["node.k8s.io"]
     resources: ["runtimeclasses"]
     verbs: ["list"]

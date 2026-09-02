@@ -1,13 +1,13 @@
 # O BFF por host próprio.
 #
-# Necessário desde que o cockpit passou a ser servido pelo emulador de Hosting:
-# a página vem de `app.localtest.me` e chama a API por URL ABSOLUTA (decisão de
-# produto — sem rewrite do Hosting), então a API precisa de um endereço estável
-# que o BROWSER alcance. `localhost:8000` via port-forward serviria, mas amarra
-# o cockpit a um túnel que cai.
+# Necessary ever since the cockpit came to be served by the Hosting emulator:
+# the page comes from `app.localtest.me` and calls the API through an ABSOLUTE
+# URL (a product decision — no Hosting rewrite), so the API needs a stable
+# address the BROWSER can reach. `localhost:8000` through a port-forward would
+# do, but it ties the cockpit to a tunnel that drops.
 #
-# Origem diferente significa CORS de verdade no caminho — o que é justamente o
-# que se quer exercitar aqui, porque em produção será igual.
+# A different origin means real CORS on the path — which is precisely what we
+# want to exercise here, because in production it will be the same.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

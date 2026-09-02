@@ -1,12 +1,13 @@
-# Emulador acessível pelo loadbalancer do k3d (localhost:8080), sem port-forward.
+# The emulator reachable through k3d's load balancer (localhost:8080), with no
+# port-forward.
 #
-# O port-forward do kubectl não sobrevive a rajada concorrente: as suítes de
-# contrato do object store derrubam a conexão e o teste falha por motivo errado,
-# escondendo (ou inventando) defeito de adaptador. O caminho pelo Ingress é o
-# mesmo que a aplicação usa, e é estável.
+# kubectl's port-forward does not survive a concurrent burst: the object store's
+# contract suites drop the connection and the test fails for the wrong reason,
+# hiding (or inventing) an adapter defect. The path through the Ingress is the
+# same one the application uses, and it is stable.
 #
-# Roteia por HOST porque um Ingress só escuta 80/443: o caminho não distingue
-# auth de storage, mas o host sim.
+# It routes by HOST because an Ingress only listens on 80/443: the path does not
+# tell auth from storage, but the host does.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -15,15 +16,15 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    # localtest.me resolve para 127.0.0.1 — quando não houver DNS, use
-    # curl --resolve ou o header Host.
+    # localtest.me resolves to 127.0.0.1 — when there is no DNS, use
+    # curl --resolve or the Host header.
     - host: auth.localtest.me
       http:
         paths:
           - { path: /, pathType: Prefix, backend: { service: { name: firebase, port: { number: 9099 } } } }
-    # O cockpit servido pelo emulador de HOSTING — o mesmo caminho que ele terá
-    # no Firebase Hosting de verdade, com rewrite de SPA, headers de cache e
-    # `/__/firebase/init.js`. Publicar aqui é `make deploy-app`.
+    # The cockpit served by the HOSTING emulator — the same path it will have on
+    # the real Firebase Hosting, with the SPA rewrite, the cache headers and
+    # `/__/firebase/init.js`. Publishing here is `make deploy-app`.
     - host: app.localtest.me
       http:
         paths:

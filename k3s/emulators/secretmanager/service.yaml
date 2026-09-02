@@ -5,7 +5,7 @@ metadata:
 spec:
   selector: { app: secretmanager }
   ports:
-    # grpc é o que o dop-core usa: a biblioteca oficial do Secret Manager fala
-    # gRPC. O gateway REST fica exposto para depuração com curl.
+    # grpc is the one dop-core uses: the official Secret Manager library speaks
+    # gRPC. The REST gateway stays exposed for debugging with curl.
     - { name: grpc, port: 9090, targetPort: 9090 }
     - { name: http, port: 8080, targetPort: 8080 }

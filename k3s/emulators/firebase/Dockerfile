@@ -1,6 +1,6 @@
-# Não existe imagem oficial do Firebase Emulator Suite.
-# Construímos a nossa com versões FIXADAS — coerente com a postura de cadeia
-# de suprimentos do projeto (ADR-0020).
+# There is no official image of the Firebase Emulator Suite.
+# We build our own with PINNED versions — consistent with the project's supply
+# chain stance (ADR-0020).
 FROM node:22-alpine
 
 ARG FIREBASE_TOOLS_VERSION=14.24.0
@@ -25,8 +25,8 @@ RUN mkdir -p /home/emulator /app /emulator-data \
  && firebase setup:emulators:ui \
  && rm -f /app/firebase.json /app/storage.rules
 
-# Usuário arbitrário não-root (requisito OKD/OpenShift — spec do substrato §2):
-# grupo root com escrita nos diretórios que o processo usa.
+# An arbitrary non-root user (an OKD/OpenShift requirement — the substrate spec
+# §2): the root group with write access to the directories the process uses.
 RUN chgrp -R 0 /app /emulator-data /home/emulator \
  && chmod -R g=u /app /emulator-data /home/emulator
 

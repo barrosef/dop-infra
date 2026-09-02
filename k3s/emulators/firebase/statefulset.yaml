@@ -11,8 +11,9 @@ spec:
     metadata:
       labels: { app: firebase }
     spec:
-      # ADR-0020 §2: tempo para o --export-on-exit concluir.
-      # Sem isso o SIGKILL chega antes do export e os dados se perdem AO PARAR.
+      # ADR-0020 §2: time for the --export-on-exit to finish.
+      # Without it the SIGKILL arrives before the export and the data is lost ON
+      # SHUTDOWN.
       terminationGracePeriodSeconds: 45
       securityContext:
         runAsUser: 1001
@@ -21,26 +22,26 @@ spec:
         - name: firebase
           image: dop-registry:5000/dop/firebase-emulators:14.24.0-2
           workingDir: /app
-          # ADR-0020 §2: --import é CONDICIONAL — passar a flag sem o diretório
-          # existir faz o emulador falhar no primeiro start.
+          # ADR-0020 §2: --import is CONDITIONAL — passing the flag without the
+          # directory existing makes the emulator fail on the first start.
           command: ["/bin/bash", "-c"]
           args:
             - |
               set -e
               IMPORT_FLAG=""
               if [ -d /emulator-data/saved ] && [ -n "$(ls -A /emulator-data/saved 2>/dev/null)" ]; then
-                echo "[emuladores] importando dados de /emulator-data/saved"
+                echo "[emulators] importing data from /emulator-data/saved"
                 IMPORT_FLAG="--import /emulator-data/saved"
               else
-                echo "[emuladores] sem dados salvos — iniciando do zero"
+                echo "[emulators] no saved data — starting from scratch"
               fi
-              # O Hosting recusa subir se `site` não existir. Criar vazio faz o
-              # ambiente subir ANTES de qualquer deploy do cockpit — e um 404
-              # é diagnóstico honesto ("nada publicado"), diferente de um pod
-              # que não sobe.
+              # Hosting refuses to start if `site` does not exist. Creating it
+              # empty makes the environment come up BEFORE any cockpit deploy —
+              # and a 404 is an honest diagnosis ("nothing published"), unlike a
+              # pod that does not come up.
               mkdir -p /emulator-data/site
               [ -f /emulator-data/site/index.html ] || \
-                echo '<!doctype html><meta charset=utf-8><title>DOP</title><p>Nada publicado ainda — rode <code>make deploy-app</code> no dop-infra.' \
+                echo '<!doctype html><meta charset=utf-8><title>DOP</title><p>Nothing published yet — run <code>make deploy-app</code> in dop-infra.' \
                   > /emulator-data/site/index.html
               exec firebase emulators:start \
                 --project dop-local \
@@ -55,9 +56,9 @@ spec:
             - { name: hosting, containerPort: 5000 }
           volumeMounts:
             - { name: data,   mountPath: /emulator-data }
-            # O site publicado mora no PVC, não num emptyDir: `firebase deploy`
-            # de verdade sobrevive a restart, e aqui também precisa sobreviver —
-            # senão todo reinício do pod desfaz o deploy sem avisar.
+            # The published site lives on the PVC, not in an emptyDir: a real
+            # `firebase deploy` survives a restart, and here it has to survive
+            # too — or every pod restart undoes the deploy without warning.
             - { name: data,   mountPath: /app/site, subPath: site }
             - { name: config, mountPath: /app/firebase.json,  subPath: firebase.json,  readOnly: true }
             - { name: config, mountPath: /app/storage.rules,  subPath: storage.rules,  readOnly: true }
@@ -66,23 +67,25 @@ spec:
             requests: { memory: "384Mi", cpu: "100m" }
             limits:   { memory: "1Gi",   cpu: "1500m" }
           readinessProbe:
-            # o hub existe sempre; a UI depende de haver emulador com UI
+            # the hub always exists; the UI depends on there being an emulator
+            # with a UI
             httpGet: { path: /emulators, port: 4400 }
             initialDelaySeconds: 20
             periodSeconds: 5
             failureThreshold: 30
-            # 1s (o padrão) é apertado demais: o hub responde na mesma thread
-            # que atende upload, e sob carga a probe expirava com o emulador
-            # perfeitamente vivo — visto 7 vezes em 2h de ambiente ocioso.
+            # 1s (the default) is far too tight: the hub answers on the same
+            # thread that serves uploads, and under load the probe timed out with
+            # the emulator perfectly alive — seen 7 times in 2h of an idle
+            # environment.
             timeoutSeconds: 5
           livenessProbe:
             httpGet: { path: /emulators, port: 4400 }
             initialDelaySeconds: 90
             periodSeconds: 20
             timeoutSeconds: 5
-            # Reiniciar o emulador por lentidão passageira apaga o estado em
-            # memória de quem estiver usando. Só reinicia se ele estiver mudo
-            # de verdade: 3 falhas × 20s = um minuto sem responder.
+            # Restarting the emulator over passing slowness erases the in-memory
+            # state of whoever is using it. It only restarts if it is genuinely
+            # mute: 3 failures × 20s = a minute with no answer.
             failureThreshold: 3
       volumes:
         - name: config

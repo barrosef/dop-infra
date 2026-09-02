@@ -4,8 +4,9 @@ resources:
   - statefulset.yaml
   - service.yaml
   - ingress.yaml
-# ADR-0020 §3: a config do emulador é a MESMA do deploy — arquivos versionados
-# no repositório, montados read-only. Emulador com config própria mente sobre a produção.
+# ADR-0020 §3: the emulator's config is the SAME as the deployment's — files
+# versioned in the repository, mounted read-only. An emulator with a config of
+# its own lies about production.
 configMapGenerator:
   - name: firebase-config
     files:

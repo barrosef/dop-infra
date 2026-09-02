@@ -1,18 +1,18 @@
-# Só o NÚCLEO fala com o emulador de segredos.
+# Only the CORE talks to the secrets emulator.
 #
-# Mesma lógica das políticas de dop-core e postgres: o emulador não tem IAM,
-# não tem autenticação e não tem TLS — qualquer pod que o alcance lê e escreve
-# QUALQUER segredo de QUALQUER conta. E o desenho da plataforma torna isso pior
-# do que parece: sandboxes de demanda rodam CÓDIGO DE AGENTE, no mesmo cluster.
+# The same logic as dop-core's and postgres' policies: the emulator has no IAM,
+# no authentication and no TLS — any pod that can reach it reads and writes ANY
+# secret of ANY account. And the platform's design makes that worse than it
+# looks: a demand's sandboxes run AGENT CODE, in the same cluster.
 #
-# Sem esta política, o cofre do ambiente local é público para dentro do
-# namespace. A política é o que substitui, aqui, o IAM que em produção é a
-# segunda barreira do isolamento entre contas — e que nenhum teste local
-# exercita.
+# Without this policy, the local environment's vault is public within the
+# namespace. The policy is what replaces, here, the IAM that in production is
+# the second barrier of the isolation between accounts — and that no local test
+# exercises.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: secretmanager-somente-core
+  name: secretmanager-core-only
   namespace: dop-local
 spec:
   podSelector:
@@ -25,8 +25,8 @@ spec:
       ports:
         - { protocol: TCP, port: 9090 }
         - { protocol: TCP, port: 8080 }
-    # NÃO há exceção para as probes. Elas rodam por `exec` DENTRO do pod
-    # (ver deployment.yaml): abrir a 8080 para o kubelet — que sonda de fora de
-    # qualquer pod, e portanto de uma origem que não dá para restringir por
-    # podSelector — abriria o gateway REST para o namespace inteiro, que é
-    # exatamente o que esta política existe para impedir.
+    # There is NO exception for the probes. They run through `exec` INSIDE the
+    # pod (see deployment.yaml): opening 8080 to the kubelet — which probes from
+    # outside any pod, and therefore from an origin that cannot be restricted by
+    # a podSelector — would open the REST gateway to the whole namespace, which
+    # is exactly what this policy exists to prevent.

@@ -12,8 +12,8 @@ spec:
       labels: { app: headlamp }
     spec:
       serviceAccountName: headlamp
-      # Mesma regra dos nossos componentes: usuário arbitrário não-root, com a
-      # permissão no grupo 0 (requisito OKD/OpenShift).
+      # The same rule as our components: an arbitrary non-root user, with the
+      # permission on group 0 (an OKD/OpenShift requirement).
       securityContext:
         runAsNonRoot: true
         runAsUser: 100

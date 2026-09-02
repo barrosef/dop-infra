@@ -8,5 +8,5 @@ data:
     CREATE EXTENSION IF NOT EXISTS vector;
     -- pg_trgm: busca textual em nomes/handles
     CREATE EXTENSION IF NOT EXISTS pg_trgm;
-    -- geração de identificadores no banco
+    -- identifier generation in the database
     CREATE EXTENSION IF NOT EXISTS pgcrypto;

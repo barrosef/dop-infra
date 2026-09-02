@@ -1,24 +1,26 @@
 # A imagem do sandbox onde o agente trabalha.
 #
-# Duas exigências que parecem detalhe e não são:
+# Two requirements that look like details and are not:
 #
-# 1. **Processo de longa duração.** O sandbox precisa ficar de pé para o agente
+# 1. **A long-running process.** The sandbox has to stay up for the agent
 #    executar comando nele (`SandboxLauncher.Exec`). Imagem cujo comando padrão
 #    termina — `alpine`, por exemplo — faz o contêiner sair no ato, e o exec
-#    seguinte falha com "container is not running", que manda procurar no lugar
+#    fails with "container is not running", which sends you looking in the wrong
 #    errado.
 #
 # 2. **Usuário arbitrário NÃO-root.** OKD/OpenShift atribuem um UID aleatório
-#    por SCC, e a imagem tem que funcionar com ele. É requisito de IMAGEM, não
-#    de implantação — por isso o workspace pertence ao grupo 0 com permissão de
-#    escrita, que é como o usuário arbitrário consegue escrever.
+#    by SCC, and the image has to work with it. It is an IMAGE requirement, not
+#    a deployment one — that is why the workspace belongs to group 0 with write
+#    permission, which is how the arbitrary user manages to write.
 FROM alpine:3.22
 
 # TODO: git, bash, curl e ca-certificates entram aqui quando o build tiver
-# rede para o índice do apk. Sem eles o agente tem shell e nada mais — dá para
-# provar o caminho de execução, não para trabalhar num repositório de verdade.
+# network access to the apk index. Without them the agent has a shell and
+# nothing else — enough to prove the execution path, not to work in a real
+# repository.
 
-# O workspace é o que SOBREVIVE à suspensão (garantia 5 da porta), e o exec
+# The workspace is what SURVIVES suspension (the port's guarantee 5), and the
+# exec
 # começa aqui (garantia 14).
 RUN mkdir -p /workspace \
  && chgrp -R 0 /workspace \
@@ -27,5 +29,5 @@ WORKDIR /workspace
 
 USER 1001
 
-# Fica de pé até alguém mandar parar. O trabalho entra por exec.
+# It stays up until somebody tells it to stop. The work comes in through exec.
 CMD ["sleep", "infinity"]

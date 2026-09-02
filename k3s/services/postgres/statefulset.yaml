@@ -15,7 +15,7 @@ spec:
         fsGroup: 999
       containers:
         - name: postgres
-          # pgvector/pgvector traz o Postgres com a extensão já compilada
+          # pgvector/pgvector ships Postgres with the extension already compiled
           image: pgvector/pgvector:pg17
           ports:
             - { name: postgres, containerPort: 5432 }

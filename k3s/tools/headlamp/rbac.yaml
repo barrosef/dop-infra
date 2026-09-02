@@ -1,4 +1,5 @@
-# ATENÇÃO: cluster-admin. Ver a seção "Permissão" do README ao lado — isto vale
+# WARNING: cluster-admin. See the "Permissions" section of the README next door
+# — this holds
 # num k3d descartável na máquina do desenvolvedor, e em nenhum outro lugar.
 apiVersion: v1
 kind: ServiceAccount

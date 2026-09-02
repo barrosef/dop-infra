@@ -1,5 +1,6 @@
-# Modo worker — consome eventos do NATS, constrói projeções e roda o relay do
-# outbox (ADR-0019): é ele que leva o evento gravado na transação até o broker.
+# The worker mode — it consumes events from NATS, builds projections and runs
+# the outbox relay (ADR-0019): it is the one that carries the event written in
+# the transaction all the way to the broker.
 # MESMA imagem do serve; só o argumento muda.
 apiVersion: apps/v1
 kind: Deployment

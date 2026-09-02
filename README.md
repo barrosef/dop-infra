@@ -1,110 +1,114 @@
 # dop-infra
 
-Infraestrutura da plataforma DOP: Terraform (QA/stage/prod) e ambiente local em k3d.
+The DOP platform's infrastructure: Terraform (QA/stage/prod) and the local k3d
+environment.
 
-> **Estado:** ambiente local funcional; Terraform em estrutura, sem resources.
-> Spec: `docs/superpowers/specs/dop-infra.md` no meta-repositório.
+> **State:** the local environment works; Terraform is structured, with no
+> resources yet. Spec: `docs/superpowers/specs/dop-infra.md` in the
+> meta-repository.
 
-## Ambiente local
+## The local environment
 
 ```bash
-make cluster-up     # cria o cluster k3d
-make images         # constrói e publica dop-core e dop-api no registry local
-make up             # aplica o ambiente
-make status         # pods, PVCs e services
+make cluster-up     # create the k3d cluster
+make images         # build and publish dop-core and dop-api to the local registry
+make up             # apply the environment
+make status         # pods, PVCs and services
 ```
 
-**Tudo é declarativo.** Não há script de orquestração: persistência é PVC, espera é
-`readinessProbe`, encerramento gracioso é `terminationGracePeriodSeconds`, reset é
-`kubectl delete pvc`. O `Makefile` existe por **uma** razão — a guarda de contexto — e
-oferece atalhos por conveniência. Operação normal é `kubectl`, `k3d` e **k9s** direto.
+**Everything is declarative.** There is no orchestration script: persistence is
+a PVC, waiting is a `readinessProbe`, a graceful shutdown is
+`terminationGracePeriodSeconds`, a reset is `kubectl delete pvc`. The `Makefile`
+exists for **one** reason — the context guard — and offers shortcuts for
+convenience. Normal operation is `kubectl`, `k3d` and **k9s** directly.
 
-**Guarda de contexto.** Todo alvo que fala com cluster recusa executar se o contexto
-ativo não for `k3d-dop-local`. Esta máquina tem contextos de produção de clientes no
-kubeconfig — a guarda não é conveniência.
+**The context guard.** Every target that talks to a cluster refuses to run if
+the active context is not `k3d-dop-local`. This machine has clients' production
+contexts in its kubeconfig — the guard is not a convenience.
 
-| Alvo | |
+| Target | |
 |---|---|
-| `make up` / `down` | aplica / remove o namespace |
-| `make reset` | apaga os PVCs (dados) sem destruir o cluster |
+| `make up` / `down` | apply / remove the namespace |
+| `make reset` | erase the PVCs (data) without destroying the cluster |
 | `make status` | pods, PVCs, services |
-| `make logs C=postgres` | logs de um componente |
-| `make ui` | abre o k9s no namespace |
-| `make images` | constrói e publica `dop-core` e `dop-api` no registry local |
-| `make image-core` / `image-api` | idem, um componente só |
-| `make rollout` | espera os Deployments dos nossos componentes ficarem prontos |
-| `make cluster-up` / `cluster-stop` / `cluster-rm` | ciclo de vida do cluster |
+| `make logs C=postgres` | one component's logs |
+| `make ui` | open k9s in the namespace |
+| `make images` | build and publish `dop-core` and `dop-api` to the local registry |
+| `make image-core` / `image-api` | the same, for one component only |
+| `make rollout` | wait for our components' Deployments to become ready |
+| `make cluster-up` / `cluster-stop` / `cluster-rm` | the cluster's life cycle |
 
-**Imagem alterada exige tag nova.** `CORE_TAG` e `API_TAG` no `Makefile`, e a
-`image:` do Deployment correspondente, sobem juntos. Reconstruir com a mesma tag
-não garante que o pod puxe a camada nova — armadilha registrada em
-`docs/ambiente-local.md`.
+**A changed image requires a new tag.** `CORE_TAG` and `API_TAG` in the
+`Makefile`, and the corresponding Deployment's `image:`, go up together.
+Rebuilding with the same tag does not guarantee the pod pulls the new layer — a
+trap recorded in `docs/local-environment.md`.
 
-| Componente | Endereço interno | Host |
+| Component | Internal address | Host |
 |---|---|---|
 | dop-core `serve` (gRPC) | `dop-core.dop-local.svc:9090` · health `:9091` | `kubectl port-forward` |
-| dop-api (BFF, REST+SSE) | `dop-api.dop-local.svc:8000` | idem |
+| dop-api (the BFF, REST+SSE) | `dop-api.dop-local.svc:8000` | the same |
 | PostgreSQL 17 + pgvector | `postgres.dop-local.svc:5432` | `kubectl port-forward` |
-| NATS JetStream | `nats.dop-local.svc:4222` · monitor `:8222` | idem |
-| Firebase Auth | `firebase.dop-local.svc:9099` | idem |
-| Firebase Storage | `firebase.dop-local.svc:9199` | idem |
-| Emulator Hub / UI | `firebase.dop-local.svc:4400` / `:4000` | idem |
+| NATS JetStream | `nats.dop-local.svc:4222` · monitor `:8222` | the same |
+| Firebase Auth | `firebase.dop-local.svc:9099` | the same |
+| Firebase Storage | `firebase.dop-local.svc:9199` | the same |
+| Emulator Hub / UI | `firebase.dop-local.svc:4400` / `:4000` | the same |
 | Ingress (Traefik) | — | `localhost:8080` / `:8443` |
-| Registry de imagens | `dop-registry:5000` | `localhost:5111` |
+| Image registry | `dop-registry:5000` | `localhost:5111` |
 
-Credencial do Postgres local: `dop` / `dop-local-dev` / base `dop` — **desenvolvimento
-apenas**; em QA/stage/prod a credencial vem do `SecretStore` (ADR-0001), nunca de
-manifesto.
+The local Postgres credential: `dop` / `dop-local-dev` / database `dop` —
+**development only**; in QA/stage/prod the credential comes from the
+`SecretStore` (ADR-0001), never from a manifest.
 
-## Propriedade de recursos — quem é dono do quê
+## Resource ownership — who owns what
 
-Regra da [ADR-0020](../../docs/adr/0020-emuladores-firebase-e-dono-unico.md): recurso
-criado pelo console fica fora do state e é revertido no `apply` seguinte. **Nada é criado
-pelo console.**
+[ADR-0020](../../docs/adr/0020-emuladores-firebase-e-dono-unico.md)'s rule: a
+resource created through the console stays out of the state and is reverted on
+the next `apply`. **Nothing is created through the console.**
 
-| Recurso | Dono | Onde vive |
+| Resource | Owner | Where it lives |
 |---|---|---|
-| Projetos GCP, IAM, APIs habilitadas | **Terraform** | `terraform/bootstrap` |
+| GCP projects, IAM, enabled APIs | **Terraform** | `terraform/bootstrap` |
 | Cloud Run, GKE, Cloud SQL, buckets, Secret Manager | **Terraform** | `terraform/stacks/platform` |
-| Regras de Storage e índices do Firebase | **arquivos versionados** (`firebase.json`, rules) | publicados pela CLI; Terraform referencia, não recria |
-| Provedores de autenticação do Firebase | **Terraform** | declarado explicitamente; nunca alterado no console |
-| Manifestos do ambiente local | **Kustomize** | `k3s/` |
+| Firebase Storage rules and indexes | **versioned files** (`firebase.json`, rules) | published by the CLI; Terraform references them, it does not recreate them |
+| Firebase authentication providers | **Terraform** | declared explicitly; never changed through the console |
+| The local environment's manifests | **Kustomize** | `k3s/` |
 
-## Estrutura
+## Structure
 
 ```
 terraform/
-├── bootstrap/          projetos, bucket de estado, SAs do CI — aplicado uma vez
-├── modules/            blocos reutilizáveis, sem valor de ambiente
-└── stacks/platform/    ÚNICO root module + envs/{qa,stage,prod}.tfvars
+├── bootstrap/          projects, the state bucket, the CI's SAs — applied once
+├── modules/            reusable blocks, with no environment values
+└── stacks/platform/    the ONLY root module + envs/{qa,stage,prod}.tfvars
 k3s/
-├── base/               namespace
+├── base/               the namespace
 ├── services/           postgres · nats · dop-core · dop-api
 ├── emulators/          firebase (auth + storage)
-└── overlays/local/     composição do ambiente local
+└── overlays/local/     the local environment's composition
 ```
 
-## Os nossos componentes no cluster
+## Our components in the cluster
 
-**dop-core** — UMA imagem, QUATRO modos (ADR-0016); o modo é o argumento do
-container. Três Deployments hoje:
+**dop-core** — ONE image, FOUR modes (ADR-0016); the mode is the container's
+argument. Three Deployments today:
 
-| Deployment | args | o que faz |
+| Deployment | args | what it does |
 |---|---|---|
-| `dop-core-serve` | `serve` | gRPC do domínio na `:9090` |
-| `dop-core-worker` | `worker` | consumidores de evento, projeções e relay do outbox |
-| `dop-core-sched` | `sched` | tarefas periódicas — réplica única, estratégia `Recreate` |
+| `dop-core-serve` | `serve` | the domain's gRPC on `:9090` |
+| `dop-core-worker` | `worker` | event consumers, projections and the outbox relay |
+| `dop-core-sched` | `sched` | periodic tasks — a single replica, `Recreate` strategy |
 
-O quarto modo, **`launcher`**, ficou de fora: é daemon do cluster de **execução**
-(provisiona sandboxes), que no ambiente local ainda não existe. Entra quando
-houver cluster de execução para ele governar.
+The fourth mode, **`launcher`**, was left out: it is a daemon of the
+**execution** cluster (it provisions sandboxes), which does not exist in the
+local environment yet. It comes in when there is an execution cluster for it to
+govern.
 
-O core tem **ServiceAccount própria** com `Role` (nunca `ClusterRole`) sobre
-`secrets` **só neste namespace** — o adaptador de `SecretStore` guarda credencial
-na API do Kubernetes (ADR-0001), e um `ClusterRole` faria o raio de explosão de um
-bug no adaptador ser o cluster inteiro.
+The core has a **ServiceAccount of its own** with a `Role` (never a
+`ClusterRole`) over `secrets` **in this namespace only** — the `SecretStore`
+adapter keeps credentials in the Kubernetes API (ADR-0001), and a `ClusterRole`
+would make the blast radius of a bug in the adapter the whole cluster.
 
-**dop-api** — o BFF, `:8000`. Sem ServiceAccount (`automountServiceAccountToken:
-false`) e sem credencial de banco: ele não fala com o Postgres, fala com o core.
-A probe usa `/healthz`, que é `@public` — qualquer outra rota devolveria 401 para
-uma sonda sem token.
+**dop-api** — the BFF, `:8000`. With no ServiceAccount
+(`automountServiceAccountToken: false`) and no database credential: it does not
+talk to Postgres, it talks to the core. The probe uses `/healthz`, which is
+`@public` — any other route would return a 401 to a probe with no token.

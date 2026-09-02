@@ -1,5 +1,5 @@
 # Pelo loadbalancer do k3d, como os emuladores — ver
-# emulators/firebase/ingress.yaml para o porquê de não usar port-forward.
+# emulators/firebase/ingress.yaml for why a port-forward is not used.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

@@ -1,4 +1,4 @@
-# dop-api — BFF: REST+SSE para o cockpit, gRPC para CLI e agentes.
+# dop-api — the BFF: REST+SSE for the cockpit, gRPC for the CLI and the agents.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -11,10 +11,10 @@ spec:
     metadata:
       labels: { app: dop-api }
     spec:
-      # Sem ServiceAccount própria: o BFF não fala com a API do Kubernetes.
-      # Quem guarda segredo é o core (ADR-0001).
+      # No ServiceAccount of its own: the BFF does not talk to the Kubernetes
+      # API. The one that keeps secrets is the core (ADR-0001).
       automountServiceAccountToken: false
-      # Tempo para as conexões SSE abertas fecharem antes do SIGKILL.
+      # Time for the open SSE connections to close before the SIGKILL.
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsUser: 1001
@@ -22,8 +22,8 @@ spec:
         fsGroup: 0
       containers:
         - name: dop-api
-          # Tag versionada, nunca :latest — reconstruir com a mesma tag não
-          # garante que o pod puxe a camada nova.
+          # A versioned tag, never :latest — rebuilding with the same tag does
+          # not guarantee the pod pulls the new layer.
           image: dop-registry:5000/dop/dop-api:0.1.0-3
           ports:
             - { name: http, containerPort: 8000 }
@@ -32,7 +32,8 @@ spec:
           resources:
             requests: { memory: "128Mi", cpu: "50m" }
             limits:   { memory: "512Mi", cpu: "1000m" }
-          # /healthz é @public — a probe não carrega token e receberia 401 em
+          # /healthz is @public — the probe carries no token and would get a 401
+          # on
           # qualquer outra rota.
           readinessProbe:
             httpGet: { path: /healthz, port: http }

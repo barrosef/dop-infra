@@ -1,8 +1,8 @@
-# Modo sched — tarefas periódicas: polling de PRs, suspensão de sandbox,
-# manutenção de partições.
+# The sched mode — periodic tasks: PR polling, sandbox suspension, partition
+# maintenance.
 #
 # Réplica ÚNICA por desenho: duas instâncias disparariam a mesma tarefa duas
-# vezes. Quando precisar de HA, o caminho é eleição de líder, não replicas: 2.
+# twice. When HA is needed, the way is leader election, not replicas: 2.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,8 +10,9 @@ metadata:
 spec:
   replicas: 1
   strategy:
-    # Recreate, não RollingUpdate: durante um rollout o padrão subiria o pod
-    # novo antes de derrubar o velho, e por alguns segundos haveria DOIS
+    # Recreate, not RollingUpdate: during a rollout the default would bring the
+    # new pod up before dropping the old one, and for a few seconds there would
+    # be TWO
     # schedulers ativos.
     type: Recreate
   selector:

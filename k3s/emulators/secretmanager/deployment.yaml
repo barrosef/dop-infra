@@ -1,22 +1,23 @@
-# Emulador do GCP Secret Manager — SOMENTE ambiente de desenvolvimento.
+# The GCP Secret Manager emulator — DEVELOPMENT ENVIRONMENT ONLY.
 #
-# ORIGEM:   https://github.com/blackwell-systems/gcp-secret-manager-emulator
-# LICENÇA:  Apache-2.0 (rótulo org.opencontainers.image.licenses da imagem)
-# VERSÃO:   1.9.0
+# SOURCE:   https://github.com/blackwell-systems/gcp-secret-manager-emulator
+# LICENCE:  Apache-2.0 (the image's org.opencontainers.image.licenses label)
+# VERSION:  1.9.0
 #
-# POR QUE UM EMULADOR DE TERCEIRO. O Google NÃO publica emulador do Secret
-# Manager — tem de Storage, Pub/Sub, Firestore, Bigtable, Spanner, mas não
-# deste. Sem ele o adaptador `gcp` do dop-core só seria exercitável com projeto
-# GCP de verdade, e a regra dos dois adaptadores da ADR-0001 viraria letra
-# morta para a porta SecretStore. Escrever o NOSSO é a pendência P-17 do
-# ROADMAP; até lá, o da comunidade.
+# WHY A THIRD-PARTY EMULATOR. Google does NOT publish a Secret Manager emulator
+# — it has one for Storage, Pub/Sub, Firestore, Bigtable and Spanner, but not
+# for this one. Without it dop-core's `gcp` adapter would only be exercisable
+# against a real GCP project, and ADR-0001's two-adapter rule would become a
+# dead letter for the SecretStore port. Writing OUR OWN is the ROADMAP's pending
+# item P-17; until then, the community's.
 #
-# POR QUE FIXADO POR DIGEST E NÃO POR TAG. É dependência de terceiro, pequena,
-# de mantenedor único, que entra no cluster para MANIPULAR SEGREDOS. Tag é
-# ponteiro mutável: quem publica `1.9.0` pode republicar `1.9.0` amanhã com
-# outro conteúdo, e o kubelet puxaria a imagem nova sem ninguém aprovar nada.
-# Digest é o conteúdo. Para atualizar, resolva o digest novo à mão e troque
-# aqui, no mesmo commit em que se revisa o que mudou:
+# WHY PINNED BY DIGEST AND NOT BY TAG. It is a third-party dependency, small,
+# with a single maintainer, that enters the cluster to HANDLE SECRETS. A tag is
+# a mutable pointer: whoever publishes `1.9.0` may republish `1.9.0` tomorrow
+# with different content, and the kubelet would pull the new image with nobody
+# approving anything. A digest is the content. To update, resolve the new digest
+# by hand and swap it here, in the same commit in which what changed is
+# reviewed:
 #
 #   TOK=$(curl -s "https://ghcr.io/token?scope=repository:blackwell-systems/gcp-secret-manager-emulator-dual:pull&service=ghcr.io" \
 #         | sed -E 's/.*"token":"([^"]+)".*/\1/')
@@ -25,16 +26,18 @@
 #     https://ghcr.io/v2/blackwell-systems/gcp-secret-manager-emulator-dual/manifests/<TAG> \
 #     | grep -i docker-content-digest
 #
-# O digest abaixo é o do ÍNDICE multi-arquitetura (amd64 e arm64), e não o de
-# uma arquitetura só — fixar o de uma quebraria a máquina de quem usa a outra.
+# The digest below is the MULTI-ARCHITECTURE INDEX's (amd64 and arm64), and not
+# a single architecture's — pinning one would break the machine of whoever uses
+# the other.
 #
-# POR QUE Deployment E NÃO StatefulSet, ao contrário do emulador do Firebase.
-# Este emulador é uma tabela em MEMÓRIA: o /data que a imagem declara fica
-# vazio, não há flag de import/export (o binário só aceita -grpc-port,
-# -http-port e -log-level) e um restart apaga tudo — verificado. Um
-# volumeClaimTemplate aqui prometeria durabilidade que não existe. A
-# consequência prática está em docs/ambiente-local.md: ao reiniciar o pod, TODA
-# credencial gravada no ambiente local some, e precisa ser regravada.
+# WHY A Deployment AND NOT A StatefulSet, unlike the Firebase emulator. This
+# emulator is an IN-MEMORY table: the /data the image declares stays empty,
+# there is no import/export flag (the binary only accepts -grpc-port, -http-port
+# and -log-level) and a restart erases everything — verified. A
+# volumeClaimTemplate here would promise a durability that does not exist. The
+# practical consequence is in docs/local-environment.md: on restarting the pod,
+# EVERY credential written in the local environment disappears and has to be
+# written again.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -45,9 +48,10 @@ spec:
   selector:
     matchLabels: { app: secretmanager }
   strategy:
-    # Recreate, não RollingUpdate: com o estado em memória, dois pods vivos ao
+    # Recreate, not RollingUpdate: with the state in memory, two pods alive at
     # mesmo tempo significam dois cofres DIFERENTES atendendo o mesmo Service —
-    # gravação num, leitura no outro, e um "segredo sumiu" impossível de
+    # a write to one, a read from the other, and a "the secret disappeared"
+    # impossible to
     # entender.
     type: Recreate
   template:
@@ -55,8 +59,8 @@ spec:
       labels: { app: secretmanager }
     spec:
       securityContext:
-        # A imagem já roda como gcpmock (uid 1000). Declarar aqui é o que faz o
-        # cluster RECUSAR se um dia ela mudar para root.
+        # The image already runs as gcpmock (uid 1000). Declaring it here is
+        # what makes the cluster REFUSE if it ever changes to root.
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
@@ -75,16 +79,17 @@ spec:
           resources:
             requests: { memory: "32Mi", cpu: "10m" }
             limits:   { memory: "256Mi", cpu: "500m" }
-          # Sondas por EXEC, de dentro do pod, e não httpGet.
+          # Probes by EXEC, from inside the pod, and not httpGet.
           #
-          # httpGet é sondado pelo KUBELET, que fala de fora de qualquer pod: a
-          # NetworkPolicy ao lado precisaria abrir a porta 8080 para toda origem
-          # para as probes passarem — e 8080 é o gateway REST, com leitura e
-          # escrita de QUALQUER segredo. A exceção que faz o pod ficar pronto
-          # seria a mesma que abre o cofre para o namespace inteiro. Sondando
+          # httpGet is probed by the KUBELET, which speaks from outside any pod:
+          # the NetworkPolicy next door would have to open port 8080 to every
+          # origin for the probes to pass — and 8080 is the REST gateway, with
+          # read and write access to ANY secret. The exception that makes the pod
+          # ready would be the same one that opens the vault to the whole
+          # namespace. By probing
           # por dentro, a política fica estrita de verdade.
           #
-          # A sonda checa as DUAS pontas: a porta gRPC (que é a que o dop-core
+          # The probe checks BOTH ends: the gRPC port (which is the one dop-core
           # usa) aceita conexão, E a API responde. Só a segunda deixaria passar
           # um listener gRPC morto; só a primeira, um processo travado.
           readinessProbe:
@@ -104,6 +109,6 @@ spec:
                 - nc -z 127.0.0.1 9090 && wget -q -O /dev/null http://127.0.0.1:8080/v1/projects/sonda/secrets
             initialDelaySeconds: 15
             periodSeconds: 20
-            # Reiniciar este pod APAGA todos os segredos do ambiente local.
+            # Restarting this pod ERASES every secret in the local environment.
             # Três falhas seguidas (um minuto mudo) antes de pagar esse preço.
             failureThreshold: 3

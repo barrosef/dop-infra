@@ -1,49 +1,52 @@
-# A fronteira de confiança entre BFF e núcleo, EXECUTADA — não combinada.
+# The trust boundary between the BFF and the core, ENFORCED — not agreed.
 #
-# O núcleo confia no que vem na metadata (`x-actor-id`, `x-account-id`): quem
-# autentica é o BFF, e o núcleo assume que só ele chama (ADR-0016). Isso é uma
-# decisão razoável, mas ela só vale se "só ele chama" for VERDADE.
+# The core trusts what comes in the metadata (`x-actor-id`, `x-account-id`): the
+# one that authenticates is the BFF, and the core assumes only it calls
+# (ADR-0016). That is a reasonable decision, but it only holds if "only it
+# calls" is TRUE.
 #
-# Sem esta política não era. Verificado com um pod avulso no namespace: ele
-# alcançava `dop-core:9090` e, por consequência, podia declarar-se qualquer ator
-# de qualquer conta. E o desenho da plataforma torna isso pior do que parece —
-# sandboxes de demanda rodam CÓDIGO DE AGENTE, no mesmo cluster.
+# Without this policy it was not. Verified with a loose pod in the namespace: it
+# reached `dop-core:9090` and, consequently, could declare itself any actor of
+# any account. And the platform's design makes that worse than it looks — a
+# demand's sandboxes run AGENT CODE, in the same cluster.
 #
-# Ingresso negado por padrão; passam só os pods que a fronteira prevê.
+# Ingress denied by default; only the pods the boundary foresees get through.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: dop-core-somente-bff
+  name: dop-core-bff-only
   namespace: dop-local
 spec:
   podSelector:
     matchLabels: { app: dop-core }
   policyTypes: [Ingress]
   ingress:
-    # O BFF, que é quem autentica o usuário.
+    # The BFF, which is the one that authenticates the user.
     - from:
         - podSelector:
             matchLabels: { app: dop-api }
       ports:
         - { protocol: TCP, port: 9090 }
-    # O próprio núcleo: worker e scheduler são o mesmo binário em outro modo.
+    # The core itself: the worker and the scheduler are the same binary in
+    # another mode.
     - from:
         - podSelector:
             matchLabels: { app: dop-core }
       ports:
         - { protocol: TCP, port: 9090 }
-    # Health e métricas continuam abertos ao kubelet, que sonda de fora de
-    # qualquer pod — restringir isto derrubaria as probes.
+    # Health and metrics stay open to the kubelet, which probes from outside any
+    # pod — restricting this would bring the probes down.
     - ports:
         - { protocol: TCP, port: 9091 }
 ---
-# O Postgres é ainda mais sensível: quem chega nele não precisa nem forjar ator,
-# lê tudo direto. Só o núcleo fala com ele — o BFF NÃO tem banco (ADR-0016), e
-# esta política é essa regra virando bloqueio em vez de disciplina.
+# Postgres is even more sensitive: whoever reaches it does not even need to
+# forge an actor, they read everything directly. Only the core talks to it — the
+# BFF has NO database (ADR-0016), and this policy is that rule becoming a block
+# rather than discipline.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: postgres-somente-core
+  name: postgres-core-only
   namespace: dop-local
 spec:
   podSelector:

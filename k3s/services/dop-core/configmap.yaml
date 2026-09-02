@@ -1,5 +1,6 @@
-# Ambiente comum aos QUATRO modos do core (ADR-0016): uma imagem, um conjunto de
-# variáveis, o modo no argumento. Divergir a configuração por modo é como um
+# The environment common to the core's FOUR modes (ADR-0016): one image, one set
+# of variables, the mode in the argument. Diverging the configuration per mode is
+# how a
 # worker acaba falando com um banco diferente do serve.
 apiVersion: v1
 kind: ConfigMap
@@ -8,21 +9,22 @@ metadata:
 data:
   NATS_URL: nats://nats.dop-local.svc:4222
 
-  # k8s é o backend exercitado TODO DIA no local — não existe emulador do GCP
-  # Secret Manager, e é essa a disciplina de dois adaptadores da ADR-0001.
+  # k8s is the backend exercised EVERY DAY locally — there is no GCP Secret
+  # Manager emulator, and that is ADR-0001's two-adapter discipline.
   SECRET_BACKEND: k8s
   SECRET_NAMESPACE: dop-local
   KUBERNETES_API: https://kubernetes.default.svc
-  # ARMADILHA: o certificado do apiserver é assinado pela CA DO CLUSTER, que não
-  # está no bundle público da imagem. Sem apontar a CA, o adaptador falha com
-  # "x509: certificate signed by unknown authority" — e só na PRIMEIRA operação
-  # de segredo, não no boot: o pod fica Running e verde, e a falha aparece na
-  # primeira credencial que alguém tenta salvar.
+  # A TRAP: the apiserver's certificate is signed by the CLUSTER'S CA, which is
+  # not in the image's public bundle. Without pointing at the CA, the adapter
+  # fails with "x509: certificate signed by unknown authority" — and only on the
+  # FIRST secret operation, not at boot: the pod stays Running and green, and the
+  # failure shows up on the first credential somebody tries to save.
   # /etc/ssl/certs continuam valendo (Firebase e GCS seguem funcionando).
 
-  # Sem esta variável o upload local vai para o bucket REAL (ADR-0020 §4).
+  # Without this variable a local upload goes to the REAL bucket (ADR-0020 §4).
   STORAGE_EMULATOR_HOST: http://firebase.dop-local.svc:9199
-  # O core verifica o token do usuário; contra o emulador a assinatura é pulada.
+  # The core verifies the user's token; against the emulator the signature is
+  # skipped.
   # Sem isto ele tentaria validar contra as chaves públicas do Google e recusaria
   # todo token emitido localmente.
   FIREBASE_AUTH_EMULATOR_HOST: firebase.dop-local.svc:9099

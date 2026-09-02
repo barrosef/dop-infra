@@ -3,9 +3,10 @@ kind: Kustomization
 resources:
   - rbac.yaml
   - networkpolicy.yaml
-  # rbac-launcher.yaml fica FORA: é ClusterRole (namespace por demanda não cabe
+  # rbac-launcher.yaml stays OUT: it is a ClusterRole (a namespace per demand
+  # does not fit
   # em Role), e enquanto RegisterLauncher for esqueleto isso seria ampliar o
-  # raio de explosão sem nada em troca. Habilite junto com o launcher.
+  # blast radius for nothing in return. Enable it along with the launcher.
   # - rbac-launcher.yaml
   - secret.yaml
   - configmap.yaml
@@ -13,6 +14,6 @@ resources:
   - deployment-worker.yaml
   - deployment-sched.yaml
   - service.yaml
-# O quarto modo — launcher — fica de fora por ora: é daemon do cluster de
-# EXECUÇÃO (provisiona sandboxes), que no local ainda não existe. Entra quando
-# houver cluster de execução para ele governar.
+# The fourth mode — launcher — stays out for now: it is a daemon of the
+# EXECUTION cluster (it provisions sandboxes), which does not exist locally yet.
+# It comes in when there is an execution cluster for it to govern.

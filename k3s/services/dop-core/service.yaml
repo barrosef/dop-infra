@@ -1,5 +1,6 @@
-# Aponta SÓ para os pods do modo serve: é o único que atende gRPC. Um seletor
-# apenas por `app: dop-core` mandaria requisição para worker e sched, que não
+# It points ONLY at the serve mode's pods: it is the only one that answers gRPC.
+# A selector by `app: dop-core` alone would send requests to the worker and the
+# sched, which do not
 # escutam na 9090 — e o sintoma seria intermitente, o pior tipo.
 apiVersion: v1
 kind: Service

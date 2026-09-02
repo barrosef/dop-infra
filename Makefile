@@ -1,27 +1,31 @@
-# Makefile mínimo — a única automação é a guarda de contexto.
-# Operação normal é kubectl/k3d/k9s direto; aqui só o que precisa de proteção.
+# A minimal Makefile — the only automation is the context guard.
+# Normal operation is kubectl/k3d/k9s directly; here, only what needs
+# protecting.
 
 CLUSTER  := dop-local
 CONTEXT  := k3d-$(CLUSTER)
 NS       := dop-local
 OVERLAY  := k3s/overlays/local
 
-# Registry do k3d: `localhost:5111` de FORA do cluster (push), `dop-registry:5000`
-# de DENTRO (pull). São o mesmo registry por dois nomes — o manifesto usa o de
-# dentro, o `docker push` daqui usa o de fora.
+# k3d's registry: `localhost:5111` from OUTSIDE the cluster (push),
+# `dop-registry:5000` from INSIDE (pull). They are the same registry under two
+# names — the manifest uses the inside one, the `docker push` here uses the
+# outside one.
 REGISTRY := localhost:5111
 REPOS    := ../
 
-# Endereços do ambiente local, pelo loadbalancer do k3d (porta 8080). Ficam em
-# variável porque as VITE_* são embutidas no bundle: quem mudar o host precisa
-# mudar AQUI e reconstruir, não só no manifesto.
+# The local environment's addresses, through k3d's load balancer (port 8080).
+# They live in variables because the VITE_* values are baked into the bundle:
+# whoever changes the host has to change it HERE and rebuild, not only in the
+# manifest.
 APP_BASE      := http://app.localtest.me:8080
 APP_API_BASE  := http://api.localtest.me:8080
 APP_AUTH_BASE := http://auth.localtest.me:8080
 
-# TAG VERSIONADA, sempre. Reconstruir com a mesma tag NÃO garante que o pod puxe
-# a camada nova: o kubelet vê o mesmo nome e reaproveita o que já tem em cache.
-# Ao mudar código: incremente aqui E na `image:` do Deployment correspondente.
+# A VERSIONED TAG, always. Rebuilding with the same tag does NOT guarantee the
+# pod pulls the new layer: the kubelet sees the same name and reuses what it
+# already has cached. When changing code: bump it HERE and in the corresponding
+# Deployment's `image:`.
 DEVBOX_TAG := 0.1.0
 CORE_TAG := 0.1.0-5
 API_TAG  := 0.1.0-3
@@ -29,47 +33,50 @@ API_TAG  := 0.1.0-3
 .PHONY: image-devbox guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
         images image-core image-api rollout
 
-## guard: recusa qualquer operação fora do cluster local.
-## Esta máquina tem contextos de produção de clientes no kubeconfig.
+## guard: it refuses any operation outside the local cluster.
+## This machine has clients' production contexts in its kubeconfig.
 guard:
 	@ctx=$$(kubectl config current-context 2>/dev/null); \
 	if [ "$$ctx" != "$(CONTEXT)" ]; then \
-		echo "ABORTADO — contexto ativo é '$$ctx', esperado '$(CONTEXT)'."; \
+		echo "ABORTED — the active context is '$$ctx', expected '$(CONTEXT)'."; \
 		echo "Use: kubectl config use-context $(CONTEXT)"; \
 		exit 1; \
 	fi
 
-up: guard                     ## aplica o ambiente local
+up: guard                     ## apply the local environment
 	kubectl apply -k $(OVERLAY)
 
-down: guard                   ## remove o namespace (mantém o cluster)
+down: guard                   ## remove the namespace (keeping the cluster)
 	kubectl delete namespace $(NS) --ignore-not-found
 
-reset: guard                  ## apaga os dados (PVCs) sem destruir o cluster
+reset: guard                  ## erase the data (PVCs) without destroying the cluster
 	kubectl delete pvc -n $(NS) --all
 
-status: guard                 ## visão rápida do ambiente
+status: guard                 ## a quick view of the environment
 	@kubectl get pods,pvc,svc -n $(NS)
 
-## logs de um componente: make logs C=postgres | C=dop-core | C=dop-api
-## Seleciona por rótulo, não por StatefulSet: serve para os dois tipos de carga
-## (o Postgres é sts, o core é Deployment) e `C=dop-core` segue os três modos.
+## one component's logs: make logs C=postgres | C=dop-core | C=dop-api
+## It selects by label, not by StatefulSet: it serves both kinds of workload
+## (Postgres is a sts, the core is a Deployment) and `C=dop-core` follows all
+## three modes.
 logs: guard
 	kubectl logs -f -n $(NS) -l app=$(C) --all-containers --prefix --max-log-requests=10
 
-ui: guard                     ## abre o k9s no namespace do ambiente
+ui: guard                     ## open k9s in the environment's namespace
 	k9s -n $(NS) --context $(CONTEXT)
 
 .PHONY: deploy-app
-deploy-app: guard             ## constrói o cockpit e publica no Hosting emulado
-	@# O análogo local de `firebase deploy --only hosting`: NÃO há imagem Docker
-	@# do frontend, nem em produção nem aqui. Hosting serve arquivo estático.
+deploy-app: guard             ## build the cockpit and publish it to the emulated Hosting
+	@# The local analogue of `firebase deploy --only hosting`: there is NO Docker
+	@# image of the frontend, neither in production nor here. Hosting serves
+	@# static files.
 	@#
-	@# As VITE_* entram na BUILD porque o Vite as substitui no bundle — mudá-las
-	@# depois exige reconstruir, e isso vale igual no Firebase Hosting real.
-	@# PORT e BASE_PATH são exigidos pelo vite.config.ts (herança do Replit).
-	@# PORT não afeta build nenhum — só o dev server —, mas o config aborta sem
-	@# ele. BASE_PATH é `/` porque o Hosting publica na RAIZ do domínio.
+	@# The VITE_* values go into the BUILD because Vite substitutes them into the
+	@# bundle — changing them afterwards requires a rebuild, and that holds the
+	@# same on the real Firebase Hosting. PORT and BASE_PATH are required by
+	@# vite.config.ts (inherited from Replit). PORT affects no build — only the
+	@# dev server — but the config aborts without it. BASE_PATH is `/` because
+	@# Hosting publishes at the domain's ROOT.
 	PORT=5173 BASE_PATH=/ \
 	VITE_API_BASE_URL=$(APP_API_BASE) \
 	VITE_FIREBASE_AUTH_EMULATOR_URL=$(APP_AUTH_BASE) \
@@ -77,40 +84,40 @@ deploy-app: guard             ## constrói o cockpit e publica no Hosting emulad
 	VITE_FIREBASE_API_KEY=fake-api-key \
 	  pnpm -C $(REPOS)dop-app/artifacts/dop build
 	@pod=$$(kubectl get pod -n $(NS) -l app=firebase -o jsonpath='{.items[0].metadata.name}'); \
-	 echo "publicando em $$pod:/app/site"; \
+	 echo "publishing to $$pod:/app/site"; \
 	 kubectl exec -n $(NS) $$pod -- sh -c 'rm -rf /app/site/* /app/site/.[!.]* 2>/dev/null; true'; \
 	 kubectl cp $(REPOS)dop-app/artifacts/dop/dist/public/. $(NS)/$$pod:/app/site/
-	@echo "publicado: $(APP_BASE)"
+	@echo "published: $(APP_BASE)"
 
 .PHONY: token-ui
-token-ui: guard               ## token de acesso do Headlamp (http://k8s.localtest.me:8080)
+token-ui: guard               ## Headlamp's access token (http://k8s.localtest.me:8080)
 	@kubectl create token headlamp -n $(NS) --duration=24h
 
-## ── imagens dos nossos componentes ──────────────────────────────────────────
-## Não precisam da guarda: `docker push` fala com o registry, não com o cluster.
+## ── our components' images ─────────────────────────────────────────────────
+## They need no guard: `docker push` talks to the registry, not to the cluster.
 
-images: image-core image-api ## constrói e publica dop-core e dop-api no registry
+images: image-core image-api ## build and publish dop-core and dop-api to the registry
 
-image-devbox:                 ## imagem do sandbox onde o agente trabalha
+image-devbox:                 ## the image of the sandbox where the agent works
 	docker build -t $(REGISTRY)/dop/devbox:$(DEVBOX_TAG) $(CURDIR)/images/devbox
 	docker push $(REGISTRY)/dop/devbox:$(DEVBOX_TAG)
 
-image-core:                   ## constrói e publica a imagem do core
+image-core:                   ## build and publish the core's image
 	docker build -t $(REGISTRY)/dop/dop-core:$(CORE_TAG) \
 	  --build-arg VERSION=$(CORE_TAG) $(REPOS)dop-core
 	docker push $(REGISTRY)/dop/dop-core:$(CORE_TAG)
 
-image-api:                    ## constrói e publica a imagem do BFF
+image-api:                    ## build and publish the BFF's image
 	docker build -t $(REGISTRY)/dop/dop-api:$(API_TAG) \
 	  --build-arg VERSION=$(API_TAG) $(REPOS)dop-api
 	docker push $(REGISTRY)/dop/dop-api:$(API_TAG)
 
-rollout: guard                ## espera os nossos Deployments ficarem prontos
+rollout: guard                ## wait for our Deployments to become ready
 	@for d in dop-core-serve dop-core-worker dop-core-sched dop-api; do \
 	  kubectl rollout status -n $(NS) deploy/$$d --timeout=120s; \
 	done
 
-cluster-up:                   ## cria o cluster k3d do zero
+cluster-up:                   ## create the k3d cluster from scratch
 	k3d cluster create $(CLUSTER) \
 	  --servers 1 --agents 0 \
 	  --port "8080:80@loadbalancer" --port "8443:443@loadbalancer" \
@@ -118,8 +125,8 @@ cluster-up:                   ## cria o cluster k3d do zero
 	  --k3s-arg "--disable=metrics-server@server:0" \
 	  --wait
 
-cluster-stop:                 ## para o cluster, preservando dados
+cluster-stop:                 ## stop the cluster, preserving the data
 	k3d cluster stop $(CLUSTER)
 
-cluster-rm:                   ## destrói o cluster e os volumes
+cluster-rm:                   ## destroy the cluster and the volumes
 	k3d cluster delete $(CLUSTER)

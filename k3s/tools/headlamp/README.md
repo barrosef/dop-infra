@@ -1,26 +1,25 @@
-# Headlamp — UI web do cluster
+# Headlamp — the cluster's web UI
 
-Por que Headlamp e não Rancher: o Rancher é um produto de gestão de FROTA de
-clusters e pede ~1 GB só para si — mais do que o ambiente inteiro do DOP
-consome hoje (~1,24 GB). Aqui a necessidade é olhar UM cluster de
-desenvolvimento. O Headlamp (CNCF) resolve isso em **48 MB** — medido
-no k3d em 2026-09-01, não estimado.
+Why Headlamp and not Rancher: Rancher is a product for managing a FLEET of
+clusters and asks for ~1 GB for itself alone — more than the whole DOP
+environment consumes today (~1.24 GB). Here the need is to look at ONE
+development cluster. Headlamp (CNCF) does that in **48 MB** — measured on k3d
+on 2026-09-01, not estimated.
 
-O `k9s` (`make ui`) continua sendo o caminho mais rápido no terminal. Os dois
-convivem: o k9s é melhor para operar, o Headlamp para ENXERGAR — árvore de
-recursos, YAML lado a lado, logs de vários pods, e um link que dá para mandar
-para alguém.
+`k9s` (`make ui`) is still the fastest path in the terminal. The two coexist:
+k9s is better for operating, Headlamp for SEEING — the resource tree, the YAML
+side by side, logs from several pods, and a link you can send to somebody.
 
-Acesso: `http://k8s.localtest.me:8080`, pelo mesmo loadbalancer do k3d que
-serve os emuladores — sem port-forward, pelo mesmo motivo documentado em
+Access: `http://k8s.localtest.me:8080`, through the same k3d load balancer that
+serves the emulators — with no port-forward, for the same reason documented in
 `emulators/firebase/ingress.yaml`.
 
-O token de entrada sai de `make token-ui`.
+The entry token comes from `make token-ui`.
 
-## Permissão
+## Permissions
 
-O ServiceAccount é `cluster-admin`. Isso é aceitável AQUI e em nenhum outro
-lugar: é um cluster k3d descartável, na máquina do desenvolvedor, sem dado de
-ninguém. Se este diretório algum dia for parar num overlay que não seja
-`local`, a regra precisa virar RBAC de leitura — e é por isso que ele NÃO está
-no `base`, e sim referenciado só pelo overlay local.
+The ServiceAccount is `cluster-admin`. That is acceptable HERE and nowhere
+else: it is a disposable k3d cluster, on the developer's machine, with nobody's
+data on it. If this directory ever ends up in an overlay that is not `local`,
+the rule has to become read-only RBAC — and that is why it is NOT in `base`,
+but referenced only by the local overlay.

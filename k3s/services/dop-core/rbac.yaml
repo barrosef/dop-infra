@@ -1,18 +1,20 @@
 # O adaptador de SecretStore do core fala com a API do Kubernetes (ADR-0001):
-# lê pela API, NUNCA por volume montado — volume é eventualmente consistente
+# reads through the API, NEVER from a mounted volume — a volume is eventually
+# consistent
 # (o kubelet sincroniza em torno de um minuto) e quebraria leitura-após-escrita.
 #
-# Falar com a API exige credencial. É a ServiceAccount abaixo que a fornece: o
-# token é projetado em /var/run/secrets/kubernetes.io/serviceaccount/token e o
+# Talking to the API requires a credential. It is the ServiceAccount below that
+# provides it: the token is projected into
+# /var/run/secrets/kubernetes.io/serviceaccount/token and the
 # config.Load o lê no boot.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: dop-core
 ---
-# Role, não ClusterRole: menor privilégio. O core só precisa de Secrets DESTE
-# namespace — um ClusterRole daria a ele o namespace de todos os outros, e o
-# raio de explosão de um bug no adaptador passaria a ser o cluster inteiro.
+# A Role, not a ClusterRole: least privilege. The core only needs Secrets from
+# THIS namespace — a ClusterRole would give it everybody else's namespace, and
+# the blast radius of a bug in the adapter would become the whole cluster.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
