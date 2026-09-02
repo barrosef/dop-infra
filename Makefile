@@ -27,8 +27,8 @@ APP_AUTH_BASE := http://auth.localtest.me:8080
 # already has cached. When changing code: bump it HERE and in the corresponding
 # Deployment's `image:`.
 DEVBOX_TAG := 0.1.0
-CORE_TAG := 0.1.0-8
-API_TAG  := 0.1.0-4
+CORE_TAG := 0.1.0-9
+API_TAG  := 0.1.0-5
 
 .PHONY: image-devbox guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
         images image-core image-api rollout
