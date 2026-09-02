@@ -61,7 +61,7 @@ The local Postgres credential: `dop` / `dop-local-dev` / database `dop` —
 
 ## Resource ownership — who owns what
 
-[ADR-0020](../../docs/adr/0020-emuladores-firebase-e-dono-unico.md)'s rule: a
+[ADR-0020](../../docs/adr/0020-firebase-emulators-and-single-owner.md)'s rule: a
 resource created through the console stays out of the state and is reverted on
 the next `apply`. **Nothing is created through the console.**
 
