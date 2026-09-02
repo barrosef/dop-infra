@@ -1,19 +1,19 @@
-# RBAC do LAUNCHER de sandbox — separado do rbac.yaml de propósito.
+# RBAC of the sandbox LAUNCHER — separate from rbac.yaml on purpose.
 #
 # The SecretStore adapter lives with a namespaced Role, and that is how it
 # should stay. The launcher needs more, because it creates a namespace PER
 # DEMAND: `namespaces` and `runtimeclasses` exist inside no namespace, so here
 # there is no way to avoid a ClusterRole.
 #
-# Este arquivo NÃO entra no overlay local por padrão: enquanto `RegisterLauncher`
+# This file does NOT enter the local overlay by default: while `RegisterLauncher`
 # is a skeleton, granting these permissions would widen the blast radius with
-# nada em troca. Habilite junto com o launcher.
+# nothing in return. Enable it along with the launcher.
 #
 # `runtimeclasses` deserves an explanation: without `list`, the adapter cannot
-# provar QUAL isolamento o cluster oferece, e `SupportedTiers` devolve
+# prove WHICH isolation the cluster offers, and `SupportedTiers` returns
 # PermissionDenied on purpose. Answering "this cluster has no Kata" when in
 # truth we cannot look would be the silent degradation ADR-0001 forbids,
-# disfarçada de RBAC.
+# disguised as RBAC.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:

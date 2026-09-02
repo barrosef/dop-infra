@@ -1,12 +1,12 @@
-# O adaptador de SecretStore do core fala com a API do Kubernetes (ADR-0001):
+# The core's SecretStore adapter talks to the Kubernetes API (ADR-0001): it
 # reads through the API, NEVER from a mounted volume — a volume is eventually
-# consistent
-# (o kubelet sincroniza em torno de um minuto) e quebraria leitura-após-escrita.
+# consistent (the kubelet syncs in around a minute) and would break
+# read-after-write.
 #
 # Talking to the API requires a credential. It is the ServiceAccount below that
 # provides it: the token is projected into
-# /var/run/secrets/kubernetes.io/serviceaccount/token and the
-# config.Load o lê no boot.
+# /var/run/secrets/kubernetes.io/serviceaccount/token and config.Load reads it
+# at boot.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

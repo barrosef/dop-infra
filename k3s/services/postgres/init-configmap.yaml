@@ -4,9 +4,9 @@ metadata:
   name: postgres-init
 data:
   01-extensions.sql: |
-    -- pgvector: busca semântica das memórias do conhecimento (ADR-0018)
+    -- pgvector: the semantic search of the knowledge's memories (ADR-0018)
     CREATE EXTENSION IF NOT EXISTS vector;
-    -- pg_trgm: busca textual em nomes/handles
+    -- pg_trgm: textual search on names/handles
     CREATE EXTENSION IF NOT EXISTS pg_trgm;
     -- identifier generation in the database
     CREATE EXTENSION IF NOT EXISTS pgcrypto;

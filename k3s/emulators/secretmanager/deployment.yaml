@@ -49,10 +49,9 @@ spec:
     matchLabels: { app: secretmanager }
   strategy:
     # Recreate, not RollingUpdate: with the state in memory, two pods alive at
-    # mesmo tempo significam dois cofres DIFERENTES atendendo o mesmo Service —
+    # at the same time mean two DIFFERENT vaults serving the same Service —
     # a write to one, a read from the other, and a "the secret disappeared"
-    # impossible to
-    # entender.
+    # impossible to understand.
     type: Recreate
   template:
     metadata:
@@ -86,18 +85,17 @@ spec:
           # origin for the probes to pass — and 8080 is the REST gateway, with
           # read and write access to ANY secret. The exception that makes the pod
           # ready would be the same one that opens the vault to the whole
-          # namespace. By probing
-          # por dentro, a política fica estrita de verdade.
+          # namespace. By probing from the inside, the policy stays genuinely strict.
           #
-          # The probe checks BOTH ends: the gRPC port (which is the one dop-core
-          # usa) aceita conexão, E a API responde. Só a segunda deixaria passar
-          # um listener gRPC morto; só a primeira, um processo travado.
+          # The probe checks BOTH ends: the gRPC port (the one dop-core uses)
+          # accepts a connection, AND the API answers. Only the second would let
+          # through a dead gRPC listener; only the first, a stuck process.
           readinessProbe:
             exec:
               command:
                 - /bin/sh
                 - -c
-                - nc -z 127.0.0.1 9090 && wget -q -O /dev/null http://127.0.0.1:8080/v1/projects/sonda/secrets
+                - nc -z 127.0.0.1 9090 && wget -q -O /dev/null http://127.0.0.1:8080/v1/projects/probe/secrets
             initialDelaySeconds: 2
             periodSeconds: 5
             failureThreshold: 6
@@ -106,9 +104,9 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - nc -z 127.0.0.1 9090 && wget -q -O /dev/null http://127.0.0.1:8080/v1/projects/sonda/secrets
+                - nc -z 127.0.0.1 9090 && wget -q -O /dev/null http://127.0.0.1:8080/v1/projects/probe/secrets
             initialDelaySeconds: 15
             periodSeconds: 20
             # Restarting this pod ERASES every secret in the local environment.
-            # Três falhas seguidas (um minuto mudo) antes de pagar esse preço.
+            # Three failures in a row (a mute minute) before paying that price.
             failureThreshold: 3

@@ -14,9 +14,8 @@ spec:
       # The ServiceAccount is what gives the SecretStore access to the
       # Kubernetes API.
       serviceAccountName: dop-core
-      # SIGTERM starts the GracefulStop; this is the time for the in-flight
-      # calls
-      # terminarem antes do SIGKILL.
+      # SIGTERM starts the GracefulStop; this is the time for the in-flight calls
+      # to finish before the SIGKILL.
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsUser: 1001
@@ -24,7 +23,7 @@ spec:
         fsGroup: 0
       containers:
         - name: dop-core
-          # Tag versionada, nunca :latest nem tag reaproveitada — reconstruir com
+          # A versioned tag, never :latest and never a reused tag — rebuilding with
           # the same tag does not guarantee the pod pulls the new layer.
           image: dop-registry:5000/dop/dop-core:0.1.0-5
           args: ["serve"]

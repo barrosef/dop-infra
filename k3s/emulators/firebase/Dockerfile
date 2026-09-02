@@ -4,19 +4,20 @@
 FROM node:22-alpine
 
 ARG FIREBASE_TOOLS_VERSION=14.24.0
-# JDK 21: o firebase-tools 15 exigirá >= 21, e o 14 já avisa.
+# JDK 21: firebase-tools 15 will require >= 21, and 14 already warns about it.
 RUN apk add --no-cache openjdk21-jre-headless bash curl \
  && npm install -g firebase-tools@${FIREBASE_TOOLS_VERSION} \
  && npm cache clean --force
 
-# HOME gravável: o CLI escreve config e cache de JARs; sem isso o start morre
-# com "update check failed / unexpected error" ao baixar o runtime de regras.
+# A writable HOME: the CLI writes config and a JAR cache; without it the start
+# dies with "update check failed / unexpected error" while downloading the rules
+# runtime.
 ENV HOME=/home/emulator \
     XDG_CONFIG_HOME=/home/emulator/.config \
     XDG_CACHE_HOME=/home/emulator/.cache
 
-# Baixa os JARs do emulador NA BUILD — start offline, previsível e sem
-# depender de rede no primeiro boot do pod.
+# It downloads the emulator's JARs AT BUILD TIME — an offline, predictable start
+# that does not depend on the network at the pod's first boot.
 RUN mkdir -p /home/emulator /app /emulator-data \
  && cd /app \
  && printf '{"emulators":{"auth":{"port":9099},"storage":{"port":9199},"ui":{"enabled":false}},"storage":{"rules":"storage.rules"}}\n' > firebase.json \

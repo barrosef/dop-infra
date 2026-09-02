@@ -1,7 +1,6 @@
 # The environment common to the core's FOUR modes (ADR-0016): one image, one set
 # of variables, the mode in the argument. Diverging the configuration per mode is
-# how a
-# worker acaba falando com um banco diferente do serve.
+# how a worker ends up talking to a different database from serve.
 apiVersion: v1
 kind: ConfigMap
 metadata:

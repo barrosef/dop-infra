@@ -1,4 +1,4 @@
-# A imagem do sandbox onde o agente trabalha.
+# The image of the sandbox where the agent works.
 #
 # Two requirements that look like details and are not:
 #
@@ -14,14 +14,13 @@
 #    permission, which is how the arbitrary user manages to write.
 FROM alpine:3.22
 
-# TODO: git, bash, curl e ca-certificates entram aqui quando o build tiver
+# TODO: git, bash, curl and ca-certificates come in here once the build has
 # network access to the apk index. Without them the agent has a shell and
 # nothing else — enough to prove the execution path, not to work in a real
 # repository.
 
 # The workspace is what SURVIVES suspension (the port's guarantee 5), and the
-# exec
-# começa aqui (garantia 14).
+# exec starts here (guarantee 14).
 RUN mkdir -p /workspace \
  && chgrp -R 0 /workspace \
  && chmod -R g=u /workspace

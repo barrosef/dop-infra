@@ -4,9 +4,9 @@ resources:
   - rbac.yaml
   - networkpolicy.yaml
   # rbac-launcher.yaml stays OUT: it is a ClusterRole (a namespace per demand
-  # does not fit
-  # em Role), e enquanto RegisterLauncher for esqueleto isso seria ampliar o
-  # blast radius for nothing in return. Enable it along with the launcher.
+  # does not fit in a Role), and while RegisterLauncher is a skeleton it would
+  # widen the blast radius for nothing in return. Enable it along with the
+  # launcher.
   # - rbac-launcher.yaml
   - secret.yaml
   - configmap.yaml

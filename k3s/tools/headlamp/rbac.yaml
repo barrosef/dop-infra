@@ -1,6 +1,6 @@
 # WARNING: cluster-admin. See the "Permissions" section of the README next door
 # — this holds
-# num k3d descartável na máquina do desenvolvedor, e em nenhum outro lugar.
+# in a disposable k3d on the developer's machine, and nowhere else.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
