@@ -30,3 +30,9 @@ data:
   FIREBASE_PROJECT: dop-local
 
   LOG_LEVEL: info
+  # The projects' root repositories (ADR-0028). PROJECT_REPO_BASE_URL is the
+  # address a SANDBOX reaches this server at — it goes into every clone URL, so
+  # it has to be resolvable from the sandbox's namespace, not from here.
+  PROJECT_REPO_BACKEND: "local"
+  PROJECT_REPO_ROOT: "/var/lib/dop/git"
+  PROJECT_REPO_BASE_URL: "http://dop-core.dop-local.svc:9091"

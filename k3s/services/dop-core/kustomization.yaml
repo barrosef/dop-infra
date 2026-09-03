@@ -8,6 +8,7 @@ resources:
   # widen the blast radius for nothing in return. Enable it along with the
   # launcher.
   # - rbac-launcher.yaml
+  - pvc-repos.yaml
   - secret.yaml
   - configmap.yaml
   - deployment-serve.yaml

@@ -1,0 +1,15 @@
+# The projects' root repositories (ADR-0028).
+#
+# ReadWriteOnce is enough and is the point: only the `serve` mode writes here —
+# the sandboxes reach the repositories over git's smart HTTP, never through a
+# shared filesystem. It is what made the design work on a cluster whose storage
+# class refuses ReadWriteMany.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dop-core-repos
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi

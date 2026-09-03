@@ -26,7 +26,7 @@ APP_AUTH_BASE := http://auth.localtest.me:8080
 # pod pulls the new layer: the kubelet sees the same name and reuses what it
 # already has cached. When changing code: bump it HERE and in the corresponding
 # Deployment's `image:`.
-DEVBOX_TAG := 0.1.0
+DEVBOX_TAG := 0.1.2
 CORE_TAG := 0.1.0-9
 API_TAG  := 0.1.0-5
 
