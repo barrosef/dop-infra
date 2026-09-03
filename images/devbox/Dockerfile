@@ -2,14 +2,14 @@
 #
 # Two requirements that look like details and are not:
 #
-# 1. **A long-running process.** The sandbox has to stay up for the agent
-#    executar comando nele (`SandboxLauncher.Exec`). Imagem cujo comando padrão
-#    termina — `alpine`, por exemplo — faz o contêiner sair no ato, e o exec
-#    fails with "container is not running", which sends you looking in the wrong
-#    errado.
+# 1. **A long-running process.** The sandbox has to stay up for the agent to run
+#    commands in it (`SandboxLauncher.Exec`). An image whose default command
+#    ends — `alpine`, for instance — makes the container exit at once, and the
+#    exec fails with "container is not running", which sends you looking in the
+#    wrong place.
 #
-# 2. **Usuário arbitrário NÃO-root.** OKD/OpenShift atribuem um UID aleatório
-#    by SCC, and the image has to work with it. It is an IMAGE requirement, not
+# 2. **An arbitrary NON-root user.** OKD/OpenShift assign a random UID by SCC,
+#    and the image has to work with it. It is an IMAGE requirement, not
 #    a deployment one — that is why the workspace belongs to group 0 with write
 #    permission, which is how the arbitrary user manages to write.
 FROM alpine:3.22
