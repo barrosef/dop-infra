@@ -21,9 +21,9 @@ RUN apk add --no-cache git bash curl ca-certificates
 # The workspace is what SURVIVES suspension (the port's guarantee 5), and the
 # exec starts here (guarantee 14). The shelf's directory and the token's are
 # created here so the arbitrary user can write the first and read the second.
-RUN mkdir -p /workspace /project /etc/dop \
- && chgrp -R 0 /workspace /project /etc/dop \
- && chmod -R g=u /workspace /project /etc/dop
+RUN mkdir -p /workspace /project /etc/dop /sessions \
+ && chgrp -R 0 /workspace /project /etc/dop /sessions \
+ && chmod -R g=u /workspace /project /etc/dop /sessions
 # The git configuration goes in the SYSTEM file, at build time, and that is the
 # only place it works. `docker exec` and `pods/exec` do NOT inherit what the
 # entrypoint exported, and the user the sandbox runs as (arbitrary under OKD's

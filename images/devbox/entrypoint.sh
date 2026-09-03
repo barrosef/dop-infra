@@ -41,4 +41,32 @@ if [ -n "${DOP_PROJECT_REPO:-}" ]; then
   git -C "$DOP_PROJECT_DIR" config user.email "${DOP_THREAD_ID:-sandbox}@agents.dop"
 fi
 
+# ── the agent's own answer about how it authenticated ───────────────────────
+#
+# The measurement has to be about what ACTUALLY happened, and only the tool
+# knows: a stray ANTHROPIC_API_KEY makes it bill a key instead of the
+# subscription, and a collector that guessed from the environment would measure
+# the wrong thing with nothing saying so.
+#
+# So the tool is ASKED, once, here — this is the only container that has the
+# binary — and the answer is left where the collector reads it.
+#
+# Note what is NOT done: the variable is not unset. Unsetting would break the
+# BYOK path, where billing a key is the correct behaviour. What is wanted is not
+# one method over the other; it is knowing WHICH one, always.
+if [ -n "${DOP_SESSION_DIR:-}" ] && [ -d "${DOP_SESSION_DIR:-}" ]; then
+  if command -v claude >/dev/null 2>&1; then
+    # Only the fields about the METHOD are kept. The e-mail and the organization
+    # are dropped on the way out: the platform already knows whose demand this
+    # is, and a second identity would add a surface without adding a measurement.
+    claude auth status 2>/dev/null \
+      | sed -n 's/.*"\(authMethod\|apiProvider\|subscriptionType\|apiKeySource\)": *\("[^"]*"\|null\).*/  "\1": \2,/p' \
+      | sed '$ s/,$//' \
+      | { echo "{"; cat; echo "}"; } > "$DOP_SESSION_DIR/.auth.json" 2>/dev/null \
+      || echo "[infra] could not read the tool's auth state" >&2
+  else
+    echo "[infra] claude is not in this image; the auth state will be unknown" >&2
+  fi
+fi
+
 exec "$@"

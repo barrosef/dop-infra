@@ -41,5 +41,5 @@ data:
   # and whoever clones the repository still gets a core that comes up.
   CALL_AUTH_MODE: "strict"
   # The collector rides in the core's OWN image — it is a mode of this binary.
-  COLLECTOR_IMAGE: "dop-registry:5000/dop/dop-core:0.1.0-12"
+  COLLECTOR_IMAGE: "dop-registry:5000/dop/dop-core:0.1.0-13"
   CORE_TARGET: "dop-core.dop-local.svc:9090"

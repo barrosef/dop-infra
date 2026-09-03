@@ -22,7 +22,7 @@ spec:
         fsGroup: 0
       containers:
         - name: dop-core
-          image: dop-registry:5000/dop/dop-core:0.1.0-12
+          image: dop-registry:5000/dop/dop-core:0.1.0-13
           args: ["worker"]
           ports:
             - { name: health, containerPort: 9091 }
