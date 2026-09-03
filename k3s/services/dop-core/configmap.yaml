@@ -36,3 +36,7 @@ data:
   PROJECT_REPO_BACKEND: "local"
   PROJECT_REPO_ROOT: "/var/lib/dop/git"
   PROJECT_REPO_BASE_URL: "http://dop-core.dop-local.svc:9091"
+  # The core verifies its own callers (ADR-0029). `strict` here and
+  # `permissive` in the code's default: the cluster we run gets the guarantee,
+  # and whoever clones the repository still gets a core that comes up.
+  CALL_AUTH_MODE: "strict"

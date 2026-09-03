@@ -27,3 +27,11 @@ data:
   CORS_ORIGINS: '["http://localhost:5173","http://app.localtest.me:8080"]'
 
   LOG_LEVEL: info
+  # The key the edge signs its assertions to the core with (ADR-0029). It has to
+  # be the SAME value the core reads as CALL_AUTH_KEY_BFF — a mismatch makes
+  # every call arrive with no actor, and the core is in `strict`.
+  #
+  # It sits in the ConfigMap and not in a Secret only because this is the local
+  # environment and the value is a placeholder; in a real deployment it is a
+  # Secret, like every other key.
+  CALL_AUTH_KEY: "local-dev-call-auth-key-change-me"
