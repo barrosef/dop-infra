@@ -34,6 +34,20 @@ spec:
             matchLabels: { app: dop-core }
       ports:
         - { protocol: TCP, port: 9090 }
+    # The COLLECTOR, from the sandboxes' namespaces (P-23 phase 1). It is a
+    # container of ours beside the agent, pushing the demand's consumption.
+    #
+    # Opening 9090 to a namespace where agent code runs would have been
+    # unthinkable yesterday. It is acceptable TODAY because of ADR-0029:
+    # reaching the port no longer means being believed — without a signature
+    # the call arrives with no actor, and the collector's key opens exactly one
+    # service. The policy narrows who may knock; the signature decides who is
+    # heard.
+    - from:
+        - namespaceSelector:
+            matchLabels: { app.kubernetes.io/managed-by: dop-core }
+      ports:
+        - { protocol: TCP, port: 9090 }
     # Health and metrics stay open to the kubelet, which probes from outside any
     # pod — restricting this would bring the probes down.
     - ports:
