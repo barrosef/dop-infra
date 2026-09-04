@@ -1,4 +1,5 @@
-# RBAC of the sandbox LAUNCHER — separate from rbac.yaml on purpose.
+# RBAC of the sandbox LAUNCHER and of the verification RUNNER — separate from
+# rbac.yaml on purpose.
 #
 # The SecretStore adapter lives with a namespaced Role, and that is how it
 # should stay. The launcher needs more, because it creates a namespace PER
@@ -25,16 +26,23 @@ rules:
   - apiGroups: [""]
     resources: ["namespaces"]
     verbs: ["create", "get", "delete"]
-  # The sandbox's execution and the log tail.
+  # The sandbox's execution and the log tail. The runner uses the same three:
+  # its pod IS the run, and its log is the run's record (ADR-0030).
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["create", "get", "delete"]
   - apiGroups: [""]
     resources: ["pods/log"]
     verbs: ["get"]
-  # The workspace that survives suspension — it is the only thing the port's
-  # guarantee 5
-  # porta promete preservar.
+  # The runner projects the repository's token as a Secret and removes it with
+  # the run. `delete` is not optional here: a credential that outlives the run
+  # that needed it is a credential nobody is watching.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "delete"]
+  # The workspace that survives suspension — the only thing the sandbox port's
+  # guarantee 5 promises to preserve — and the ACCOUNT's cache volume, which
+  # outlives every run that uses it.
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["create", "get"]

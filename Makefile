@@ -27,10 +27,11 @@ APP_AUTH_BASE := http://auth.localtest.me:8080
 # already has cached. When changing code: bump it HERE and in the corresponding
 # Deployment's `image:`.
 DEVBOX_TAG := 0.1.3
+RUNNER_TAG := 0.1.0
 CORE_TAG := 0.1.0-13
 API_TAG  := 0.1.0-6
 
-.PHONY: image-devbox guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
+.PHONY: image-devbox image-runner guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
         images image-core image-api rollout
 
 ## guard: it refuses any operation outside the local cluster.
@@ -101,6 +102,10 @@ images: image-core image-api ## build and publish dop-core and dop-api to the re
 image-devbox:                 ## the image of the sandbox where the agent works
 	docker build -t $(REGISTRY)/dop/devbox:$(DEVBOX_TAG) $(CURDIR)/images/devbox
 	docker push $(REGISTRY)/dop/devbox:$(DEVBOX_TAG)
+
+image-runner:                 ## the image a verification runs in (ADR-0030)
+	docker build -t $(REGISTRY)/dop/runner:$(RUNNER_TAG) $(CURDIR)/images/runner
+	docker push $(REGISTRY)/dop/runner:$(RUNNER_TAG)
 
 image-core:                   ## build and publish the core's image
 	docker build -t $(REGISTRY)/dop/dop-core:$(CORE_TAG) \
