@@ -133,8 +133,22 @@ with different screens. The GitHub App is what
 uses to *act* on repositories — installed per organization, with its own
 permissions. That is separate work, later. What sign-in needs is an OAuth App.
 
-- **Application name:** `DOP` — read by a person on GitHub's authorization
-  screen.
+**One OAuth App per environment, not one shared.** Since August 2026 a GitHub
+OAuth App accepts up to ten redirect URIs, so a single app *could* serve QA and
+production. It should not, and the reason is the client secret: a shared app
+means both environments hold the same credential, and QA is by definition where
+credentials leak — looser access, more people, disposable data, deploys without
+ceremony. Whoever reads QA's secret can impersonate production's sign-in, and
+rotating after a QA incident would force a production change in the same move.
+That is the exact path §3 of the infra spec closes for GCP projects, reopened at
+the identity layer.
+
+It also buys something: with one app per environment, the authorization screen
+can say **which** environment somebody is authorizing.
+
+- **Application name:** `DOP (QA)` — read by a person on GitHub's authorization
+  screen, and the only signal telling a tester which environment they are
+  entering. Production's app is `DOP`.
 - **Homepage URL:** the product's URL when it exists; for now
   `https://<project-id>.firebaseapp.com` is honest and valid.
 - **Authorization callback URL:** exactly
@@ -146,6 +160,13 @@ permissions. That is separate work, later. What sign-in needs is an OAuth App.
   Two underscores before `auth`. A wrong callback fails at the end of the flow,
   after the person has already authorized — which reads as the product being
   broken rather than misconfigured.
+
+**Check whether wildcard matching is on, and turn it off.** GitHub added
+per-URI wildcard matching in August 2026, and apps that existed before then had
+it switched on for their single callback URL. A new app should not need it: this
+callback is one exact URL on one exact host. A wildcard here widens where GitHub
+is willing to send an authorization code, which is attack surface bought for
+nothing.
 
 Then **Generate a new client secret**. GitHub shows it **once**. Copy it and go
 straight to step 6; do not store it anywhere on the way.
