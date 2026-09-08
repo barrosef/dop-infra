@@ -73,6 +73,57 @@ This is the single most valuable thing the POC found, and it has nothing to do
 with IAP. It would have surfaced as a confusing permission error in the middle
 of the first real deployment.
 
+## 3b. What IAP actually hands the service — measured
+
+A real sign-in produced this assertion:
+
+```json
+{
+  "aud": "/projects/620588764334/locations/us-central1/services/poc-api",
+  "azp": "/projects/620588764334/locations/us-central1/services/poc-api",
+  "email": "ed.barros@digitalbusinessone.com",
+  "exp": 1788870856, "iat": 1788870256,
+  "hd": "digitalbusinessone.com",
+  "identity_source": "GOOGLE",
+  "iss": "https://cloud.google.com/iap",
+  "sub": "accounts.google.com:110778210555756307913"
+}
+```
+
+**Nine fields, and that is the whole shape.** It says who the person is and which
+resource they reached. There is no room in it for an application role, and none
+appeared — the set is fixed, not empty for want of configuration.
+
+`identity_source: GOOGLE` is the sharpest line: **Identity Platform is enabled on
+this project and IAP did not use it.** External identities is a different
+configuration, not a default, and it carries the separate authentication
+application the documentation describes.
+
+Two more measurements worth keeping:
+
+- **`person_token_present: false`.** The person's own credential never reached
+  the private service, because there was none: the browser authenticated with an
+  **IAP session cookie**, not an `Authorization` header. IAP does not layer over
+  the token this platform verifies — it **replaces** it. What was an argument is
+  now an observation.
+- **The e-mail header is prefixed with its source**:
+  `accounts.google.com:ed.barros@...`. Reading it naively yields a malformed
+  address.
+- The assertion lives **ten minutes** (`exp - iat = 600`), refreshed by the
+  proxy.
+
+### What this did NOT settle
+
+With external identities configured, IAP adds a `gcip` claim carrying the
+Identity Platform token — and custom claims **would** travel inside it. So roles
+could technically ride there.
+
+What that would not change is the reason they should not: a role here is **per
+account**, a claim **goes stale by up to an hour** while `RemoveMembership` takes
+effect immediately, and **per-resource grants** do not fit in a claim at all. The
+POC showed the default mode has no room; the model argument stands in either
+mode.
+
 ## 4. IAP redirects to Google accounts
 
 With `--iap`, an anonymous browser request returns **302 to
