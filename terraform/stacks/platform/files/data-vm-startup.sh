@@ -11,10 +11,10 @@
 set -euo pipefail
 exec > >(logger -t dop-startup) 2>&1
 
-REGION=us-central1
-PROJECT=dop-qa
-AR="${REGION}-docker.pkg.dev/${PROJECT}/dop"
-CORE_TAG=0.1.0-15
+REGION=${region}
+PROJECT=${project}
+AR="$${REGION}-docker.pkg.dev/$${PROJECT}/dop"
+CORE_TAG=${core_image_tag}
 
 token() {
   curl -s -H 'Metadata-Flavor: Google' \
@@ -25,14 +25,14 @@ token() {
 # The password never appears in this file, in the instance metadata, or in an
 # image. It is read at boot from Secret Manager with the VM's own identity.
 PGPASS=$(curl -s -H "Authorization: Bearer $(token)" \
-  "https://secretmanager.googleapis.com/v1/projects/${PROJECT}/secrets/dop-postgres-password/versions/latest:access" \
+  "https://secretmanager.googleapis.com/v1/projects/$${PROJECT}/secrets/dop-postgres-password/versions/latest:access" \
   | sed -n 's/.*"data": "\([^"]*\)".*/\1/p' | base64 -d)
 
 # /root is read-only on Container-Optimized OS, and docker-credential-gcr writes
 # its config under $HOME. Point HOME somewhere writable before calling it.
 export HOME=/var/lib/dop
-mkdir -p "${HOME}"
-docker-credential-gcr configure-docker --registries="${REGION}-docker.pkg.dev"
+mkdir -p "$${HOME}"
+docker-credential-gcr configure-docker --registries="$${REGION}-docker.pkg.dev"
 
 # ── The host firewall ───────────────────────────────────────────────────────
 # Container-Optimized OS ships with INPUT set to DROP. A VPC firewall rule that
@@ -64,11 +64,11 @@ chmod 777 /var/lib/dop/git
 # the thing that starts the OOM killer.
 docker rm -f postgres 2>/dev/null || true
 docker run -d --name postgres --restart=always --network=host \
-  -e POSTGRES_USER=dop -e POSTGRES_PASSWORD="${PGPASS}" -e POSTGRES_DB=dop \
+  -e POSTGRES_USER=dop -e POSTGRES_PASSWORD="$${PGPASS}" -e POSTGRES_DB=dop \
   -e PGDATA=/var/lib/postgresql/data/pgdata \
   -v /var/lib/dop/pgdata:/var/lib/postgresql/data \
   --memory=420m \
-  "${AR}/pgvector:pg16" \
+  "$${AR}/pgvector:pg16" \
   -c shared_buffers=96MB -c max_connections=50 -c work_mem=2MB
 
 # ── NATS with JetStream ─────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ docker run -d --name postgres --restart=always --network=host \
 docker rm -f nats 2>/dev/null || true
 docker run -d --name nats --restart=always --network=host \
   -v /var/lib/dop/nats:/data --memory=96m \
-  "${AR}/nats:2-alpine" -js -sd /data -m 8222
+  "$${AR}/nats:2-alpine" -js -sd /data -m 8222
 
 # ── The core's worker ───────────────────────────────────────────────────────
 # It consumes events and builds the projection the attention box reads. Without
@@ -89,11 +89,11 @@ docker rm -f dop-worker 2>/dev/null || true
 # to write. Without the mount it starts, tries to create its root and dies.
 docker run -d --name dop-worker --restart=always --network=host --memory=160m \
   -v /var/lib/dop/git:/var/lib/dop \
-  -e DATABASE_URL="postgres://dop:${PGPASS}@127.0.0.1:5432/dop?sslmode=disable" \
+  -e DATABASE_URL="postgres://dop:$${PGPASS}@127.0.0.1:5432/dop?sslmode=disable" \
   -e NATS_URL="nats://127.0.0.1:4222" \
   -e SECRET_BACKEND=gcp \
-  -e SECRET_PROJECT="${PROJECT}" \
-  -e GOOGLE_CLOUD_PROJECT="${PROJECT}" \
-  "${AR}/dop-core:${CORE_TAG}" worker
+  -e SECRET_PROJECT="$${PROJECT}" \
+  -e GOOGLE_CLOUD_PROJECT="$${PROJECT}" \
+  "$${AR}/dop-core:$${CORE_TAG}" worker
 
 echo "dop-startup: done"

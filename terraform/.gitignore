@@ -1,0 +1,10 @@
+# Provider binaries and lock-adjacent working files.
+.terraform/
+# State NEVER goes in git: it holds resource attributes and, for some
+# providers, values that were meant to stay in Secret Manager.
+*.tfstate
+*.tfstate.*
+# Local backend overrides used to run a read-only plan before the state bucket
+# exists. Personal, never shared.
+*_override.tf
+crash.log
