@@ -94,24 +94,33 @@ A real sign-in produced this assertion:
 resource they reached. There is no room in it for an application role, and none
 appeared — the set is fixed, not empty for want of configuration.
 
-`identity_source: GOOGLE` is the sharpest line, and an earlier version of this
-document read it wrongly. It does **not** show IAP declining an available
-Identity Platform — Identity Platform was never initialized here. Enabling the
-`identitytoolkit` API is not the same as configuring the product, and citing it
-as evidence was a mistake.
+`identity_source: GOOGLE` is the sharpest line, and it took two wrong readings
+to get right. Verified afterwards, with the project's configuration in hand:
 
-What the line actually shows is simpler and more useful: **IAP authenticates
-against Google's own account system by default, and needs no Identity Platform at
-all.** The redirect went to `accounts.google.com/o/oauth2/v2/auth` with a
-client ID belonging to IAP, the issuer is `https://cloud.google.com/iap`, and the
-subject is prefixed `accounts.google.com:`. The person was admitted as a Google
-Cloud identity, authorized by an ordinary IAM grant
-(`roles/iap.httpsResourceAccessor`).
+**Identity Platform IS initialized on `dop-qa`** — e-mail/password and
+`google.com` both enabled — **and IAP authenticated against Google anyway.**
 
-Using the product's own identities instead means configuring IAP for external
-identities — a deliberate, separate setup that carries the separate
-authentication application the documentation describes. Nothing about the default
-path leads there.
+That is the finding, and it is stronger than either earlier version. IAP does not
+inherit the project's identity configuration. Using the product's own identities
+means configuring IAP for **external identities**, deliberately, with the
+separate authentication application the documentation describes. A project that
+already has Identity Platform running, with the exact providers the product uses,
+gets Google sign-in from IAP until somebody changes that on purpose.
+
+The redirect went to `accounts.google.com/o/oauth2/v2/auth` with a client ID
+belonging to IAP; the issuer is `https://cloud.google.com/iap`; the subject is
+prefixed `accounts.google.com:`. The person was admitted as a Google Cloud
+identity and authorized by an ordinary IAM grant
+(`roles/iap.httpsResourceAccessor`) — Identity Platform nowhere in the path.
+
+> **On the two wrong readings**, because the habit matters more than the fact.
+> The first draft claimed Identity Platform was enabled and ignored, which was
+> true but rested on the API being enabled — not the same thing as the product
+> being configured. The second draft "corrected" it to say Identity Platform was
+> never initialized, which was false, and was written after a `gcloud` command
+> failed silently on an expired token. **A claim was turned into its opposite on
+> the strength of a command that did not run.** Correcting on absence of evidence
+> is how a document ends up less true than before it was fixed.
 
 Two more measurements worth keeping:
 
