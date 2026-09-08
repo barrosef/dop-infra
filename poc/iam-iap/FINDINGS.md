@@ -94,10 +94,24 @@ A real sign-in produced this assertion:
 resource they reached. There is no room in it for an application role, and none
 appeared — the set is fixed, not empty for want of configuration.
 
-`identity_source: GOOGLE` is the sharpest line: **Identity Platform is enabled on
-this project and IAP did not use it.** External identities is a different
-configuration, not a default, and it carries the separate authentication
-application the documentation describes.
+`identity_source: GOOGLE` is the sharpest line, and an earlier version of this
+document read it wrongly. It does **not** show IAP declining an available
+Identity Platform — Identity Platform was never initialized here. Enabling the
+`identitytoolkit` API is not the same as configuring the product, and citing it
+as evidence was a mistake.
+
+What the line actually shows is simpler and more useful: **IAP authenticates
+against Google's own account system by default, and needs no Identity Platform at
+all.** The redirect went to `accounts.google.com/o/oauth2/v2/auth` with a
+client ID belonging to IAP, the issuer is `https://cloud.google.com/iap`, and the
+subject is prefixed `accounts.google.com:`. The person was admitted as a Google
+Cloud identity, authorized by an ordinary IAM grant
+(`roles/iap.httpsResourceAccessor`).
+
+Using the product's own identities instead means configuring IAP for external
+identities — a deliberate, separate setup that carries the separate
+authentication application the documentation describes. Nothing about the default
+path leads there.
 
 Two more measurements worth keeping:
 
