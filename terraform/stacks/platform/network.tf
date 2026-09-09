@@ -5,6 +5,7 @@ resource "google_compute_firewall" "iap_ssh" {
   project       = var.project
   name          = "allow-iap-ssh"
   network       = "default"
+  description   = "SSH via IAP TCP forwarding"
   source_ranges = ["35.235.240.0/20"]
 
   allow {

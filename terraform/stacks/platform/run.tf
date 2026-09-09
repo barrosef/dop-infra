@@ -1,3 +1,11 @@
+data "google_project" "this" {
+  project_id = var.project
+}
+
+locals {
+  core_host = "dop-core-${data.google_project.this.number}.${var.region}.run.app"
+}
+
 # ── The core: private, and private by IAM rather than by network ─────────────
 #
 # ADR-0029. Nothing anonymous reaches it: Cloud Run refuses the request with 403
@@ -8,7 +16,15 @@ resource "google_cloud_run_v2_service" "core" {
   name                = "dop-core"
   location            = var.region
   ingress             = "INGRESS_TRAFFIC_ALL"
-  deletion_protection = false
+  deletion_protection = true
+
+  # The SERVICE-level scaling block, distinct from the template's. The API
+  # always returns it populated, so omitting it makes Terraform propose nulling
+  # it on every single plan — a diff that never converges and trains everyone to
+  # skim past plans.
+  scaling {
+    min_instance_count = 0
+  }
 
   template {
     service_account                  = google_service_account.core.email
@@ -46,6 +62,10 @@ resource "google_cloud_run_v2_service" "core" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        # CPU only while a request is in flight. Left unset, the provider asks
+        # for CPU ALWAYS ALLOCATED, which bills around the clock and throws away
+        # the reason these services are on Cloud Run instead of the VM.
+        cpu_idle          = true
         startup_cpu_boost = true
       }
 
@@ -127,7 +147,15 @@ resource "google_cloud_run_v2_service" "api" {
   location             = var.region
   ingress              = "INGRESS_TRAFFIC_ALL"
   invoker_iam_disabled = true
-  deletion_protection  = false
+  deletion_protection  = true
+
+  # The SERVICE-level scaling block, distinct from the template's. The API
+  # always returns it populated, so omitting it makes Terraform propose nulling
+  # it on every single plan — a diff that never converges and trains everyone to
+  # skim past plans.
+  scaling {
+    min_instance_count = 0
+  }
 
   template {
     service_account                  = google_service_account.api.email
@@ -152,6 +180,10 @@ resource "google_cloud_run_v2_service" "api" {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        # CPU only while a request is in flight. Left unset, the provider asks
+        # for CPU ALWAYS ALLOCATED, which bills around the clock and throws away
+        # the reason these services are on Cloud Run instead of the VM.
+        cpu_idle          = true
         startup_cpu_boost = true
       }
 
@@ -159,13 +191,19 @@ resource "google_cloud_run_v2_service" "api" {
       # channel from plaintext to TLS-with-identity on the BFF side: with it
       # empty the client speaks cleartext, which the in-cluster core accepts and
       # Cloud Run refuses.
+      # Cloud Run gives a service TWO hostnames: one built from the project
+      # NUMBER and one from an opaque hash. `.uri` returns the hash form, and
+      # what is deployed and proven working is the number form — the audience of
+      # the token the BFF mints has to be the host it actually dials. Deriving
+      # it from the project number keeps the working value instead of quietly
+      # swapping the identity of the callee.
       env {
         name  = "CORE_GRPC"
-        value = "${trimprefix(google_cloud_run_v2_service.core.uri, "https://")}:443"
+        value = "${local.core_host}:443"
       }
       env {
         name  = "CORE_AUDIENCE"
-        value = google_cloud_run_v2_service.core.uri
+        value = "https://${local.core_host}"
       }
       env {
         name  = "FIREBASE_PROJECT"
