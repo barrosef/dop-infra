@@ -55,3 +55,25 @@ resource "google_project_iam_member" "vm_writes_logs" {
   role    = "roles/logging.logWriter"
   member  = "serviceAccount:${google_service_account.vm.email}"
 }
+
+// Minting the verification link (spec SP-0 D-7).
+//
+// There is no narrower predefined role. Identity Platform ships admin and
+// viewer, and generating an action link needs admin — so this grant lets the
+// BFF read and modify EVERY identity in the project, which is far more than it
+// uses.
+//
+// It is the widest privilege in this stack, and it sits on the one service
+// reachable from the internet. That is a real cost, accepted deliberately and
+// with an end date: docs/qa-verification-link-privilege.md carries the narrower
+// design and why it is a slice of its own rather than a refactor smuggled into
+// a deploy.
+//
+// Whoever removes this line should be able to remove it without touching
+// anything else. If that stops being true, the debt got bigger while nobody
+// was looking.
+resource "google_project_iam_member" "api_mints_action_links" {
+  project = var.project
+  role    = "roles/firebaseauth.admin"
+  member  = "serviceAccount:${google_service_account.api.email}"
+}

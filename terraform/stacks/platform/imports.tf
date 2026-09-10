@@ -23,7 +23,7 @@ import {
 }
 
 import {
-  for_each = toset(local.secrets)
+  for_each = toset(local.adopted_secrets)
   to       = google_secret_manager_secret.this[each.value]
   id       = "projects/${var.project}/secrets/${each.value}"
 }

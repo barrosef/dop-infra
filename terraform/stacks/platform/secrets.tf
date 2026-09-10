@@ -3,6 +3,20 @@
 # this repository can be given access to. The values are put in by hand, or by
 # the owner steps in docs/qa-bootstrap-owner-steps.md.
 locals {
+  # The secrets the stack ADOPTED when it took over the hand-built environment.
+  # imports.tf iterates over this list and not over `secrets`: a new secret is
+  # CREATED, and an import block pointed at something that does not exist yet
+  # fails the whole plan — which is exactly what happened the first time one was
+  # added here.
+  adopted_secrets = [
+    "dop-database-url",
+    "dop-postgres-password",
+    "dop-call-auth-key-bff",
+    "dop-call-auth-key-collector",
+    "dop-project-repo-key",
+    "dop-project-repo-admin-key",
+  ]
+
   secrets = [
     "dop-database-url",      # the core's connection string
     "dop-postgres-password", # read at boot by the data VM
