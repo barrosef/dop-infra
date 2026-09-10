@@ -2,18 +2,41 @@
 
 ## What was granted, and why
 
-`dop-api-sa` holds `roles/firebaseauth.admin` on `dop-qa`
+`dop-api-sa` holds a CUSTOM role, `dopActionLinkMinter`, with exactly one
+permission: `firebaseauth.users.sendEmail`
 (`terraform/stacks/platform/identity.tf`).
 
 The BFF needs it for exactly one call: asking Identity Platform to mint a
-verification link with `returnOobLink` and **not** send it (spec SP-0 D-7). No
-narrower predefined role exists — Identity Platform ships `admin` and `viewer`,
-and minting an action link needs `admin`.
+verification link with `returnOobLink` and **not** send it (spec SP-0 D-7).
 
-So the grant buys one method and pays for all of them: with it, the BFF can
-read, modify, disable and delete **every** identity in the project.
+**An earlier version of this document said no narrower role existed.** That was
+true of the PREDEFINED roles and false as written, because it never considered a
+custom one. The correction came from a question worth recording: *why
+`firebaseauth`, if we are working with Identity Platform?*
 
-## Why that is worse here than the same grant elsewhere
+The answer is that they are one service — same API
+(`identitytoolkit.googleapis.com`), same permission namespace `firebaseauth.*`;
+only the role names differ. Which also settles the alternative: measured against
+the live project, `roles/identityplatform.admin` is the same eleven permissions
+as `roles/firebaseauth.admin` **plus seven for managing tenants**. It is
+broader, not more modern.
+
+So the choice was never between two predefined roles. It was between sixteen
+permissions and one:
+
+| | permissions | includes |
+|---|---|---|
+| `roles/firebaseauth.admin` | 16 | `users.delete`, `users.create`, `configs.getSecret` |
+| `roles/identityplatform.admin` | 18 | all of the above, plus tenant management |
+| `dopActionLinkMinter` | **1** | `users.sendEmail` |
+
+A compromise of the public edge now buys the ability to send verification mail.
+It does not buy the ability to delete every account in the project.
+
+## Why it still belongs in the core
+
+One permission is a much smaller cost than sixteen, and it changes the urgency
+rather than the direction.
 
 `dop-api` is the one service in this architecture that is reachable from the
 open internet. It is public deliberately — the cockpit calls it from a browser,
@@ -45,8 +68,9 @@ Concretely:
 2. The Firebase adapter implements it with the same REST call the BFF makes
    today (`accounts:sendOobCode`, `returnOobLink: true`), authenticated by the
    core's own service account.
-3. `roles/firebaseauth.admin` moves from `dop-api-sa` to `dop-core-sa`, and this
-   file's grant is deleted.
+3. The custom role's binding moves from `dop-api-sa` to `dop-core-sa`, and this
+   file's grant is deleted. The role itself can stay: it is correct, and the
+   core wants exactly the same one permission.
 4. `app/platform/security/firebase_admin.py` is deleted from the BFF.
 
 ## The second thing it fixes, which is not about privilege

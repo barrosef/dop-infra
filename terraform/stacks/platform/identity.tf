@@ -58,22 +58,36 @@ resource "google_project_iam_member" "vm_writes_logs" {
 
 // Minting the verification link (spec SP-0 D-7).
 //
-// There is no narrower predefined role. Identity Platform ships admin and
-// viewer, and generating an action link needs admin — so this grant lets the
-// BFF read and modify EVERY identity in the project, which is far more than it
-// uses.
+// A CUSTOM role with one permission, not a predefined one with sixteen.
 //
-// It is the widest privilege in this stack, and it sits on the one service
-// reachable from the internet. That is a real cost, accepted deliberately and
-// with an end date: docs/qa-verification-link-privilege.md carries the narrower
-// design and why it is a slice of its own rather than a refactor smuggled into
-// a deploy.
+// The predefined shapes were all wrong in the same direction. Firebase
+// Authentication and Identity Platform are ONE service — same API
+// (identitytoolkit.googleapis.com), same permission namespace `firebaseauth.*`;
+// only the role names differ. So `identityplatform.admin` is not the "modern"
+// alternative to `firebaseauth.admin`, it is the same eleven permissions plus
+// seven for managing tenants: BROADER, not narrower. And `firebaseauth.admin`
+// carries `users.delete`, `users.create` and `configs.getSecret` to buy the one
+// call the BFF actually makes.
 //
-// Whoever removes this line should be able to remove it without touching
-// anything else. If that stops being true, the debt got bigger while nobody
-// was looking.
+// What that call needs is `firebaseauth.users.sendEmail` — asking Identity
+// Platform to mint an action link. One permission. A compromise of the public
+// edge then buys the ability to send verification mail, not the ability to
+// delete every account in the project.
+//
+// This still belongs in the core rather than at the edge, for the reasons in
+// docs/qa-verification-link-privilege.md. The custom role makes that migration
+// less urgent; it does not make it unnecessary.
+resource "google_project_iam_custom_role" "action_link_minter" {
+  project     = var.project
+  role_id     = "dopActionLinkMinter"
+  title       = "DOP — mint identity action links"
+  description = "Generate verification and password-reset links without sending them. One permission, on purpose: see identity.tf."
+
+  permissions = ["firebaseauth.users.sendEmail"]
+}
+
 resource "google_project_iam_member" "api_mints_action_links" {
   project = var.project
-  role    = "roles/firebaseauth.admin"
+  role    = google_project_iam_custom_role.action_link_minter.name
   member  = "serviceAccount:${google_service_account.api.email}"
 }
