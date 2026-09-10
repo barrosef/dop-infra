@@ -32,3 +32,15 @@ variable "data_vm_internal_ip" {
   type        = string
   description = "Pinned so the Cloud Run services can be configured before the VM exists. A DHCP address here would make the services depend on boot order."
 }
+
+variable "mail_backend" {
+  type        = string
+  default     = "smtp"
+  description = "Which Mailer adapter the core wires: onesignal | sendgrid | smtp. An empty credential turns any of them into a dry run rather than a failure."
+}
+
+variable "onesignal_app_id" {
+  type        = string
+  default     = ""
+  description = "The OneSignal application id. Public by design (it ships in the client SDKs); an empty value leaves the mailer in dry run, which renders and logs instead of sending."
+}

@@ -2,10 +2,22 @@ project = "dop-qa"
 region  = "us-central1"
 zone    = "us-central1-a"
 
-core_image_tag = "0.1.0-15"
-api_image_tag  = "0.1.0-8"
+core_image_tag = "0.1.0-17"
+api_image_tag  = "0.1.0-9"
 
 data_vm_internal_ip = "10.128.0.2"
+
+# The e-mail channel. OneSignal covers push, e-mail and SMS; this is the e-mail
+# half. With no app id or key the adapter runs in DRY RUN — it renders and logs
+# the message instead of sending it, which is enough to prove the chain and not
+# enough to reach anybody.
+mail_backend = "onesignal"
+
+# The OneSignal application. This id is NOT a credential — OneSignal ships it
+# inside every client SDK, web and mobile — so it lives here like any other
+# environment fact. The REST key is a credential and lives in Secret Manager;
+# Terraform owns its container and never its value.
+onesignal_app_id = "0e30a77e-5dd1-44e8-989f-b25150bd6432"
 
 # The cockpit runs on Replit and locally. Widened deliberately, one origin at a
 # time — a wildcard here is a credential leak waiting for a bad afternoon.

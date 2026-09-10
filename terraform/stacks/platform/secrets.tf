@@ -10,6 +10,7 @@ locals {
     "dop-call-auth-key-collector",
     "dop-project-repo-key", # ADR-0028: the project-knowledge git server
     "dop-project-repo-admin-key",
+    "dop-onesignal-api-key", # the REST credential of the e-mail channel
   ]
 }
 

@@ -98,6 +98,14 @@ resource "google_cloud_run_v2_service" "core" {
         name  = "PROJECT_REPO_BACKEND"
         value = "local"
       }
+      env {
+        name  = "MAIL_BACKEND"
+        value = var.mail_backend
+      }
+      env {
+        name  = "ONESIGNAL_APP_ID"
+        value = var.onesignal_app_id
+      }
       # Cloud Run's filesystem is read-only except /tmp. ADR-0028's git server
       # needs somewhere to write, and on this instance it is scratch: the
       # durable copy lives on the data VM's worker.
@@ -113,6 +121,7 @@ resource "google_cloud_run_v2_service" "core" {
           CALL_AUTH_KEY_COLLECTOR = "dop-call-auth-key-collector"
           PROJECT_REPO_KEY        = "dop-project-repo-key"
           PROJECT_REPO_ADMIN_KEY  = "dop-project-repo-admin-key"
+          ONESIGNAL_API_KEY       = "dop-onesignal-api-key"
         }
         content {
           name = env.key
