@@ -97,8 +97,32 @@ appeared — the set is fixed, not empty for want of configuration.
 `identity_source: GOOGLE` is the sharpest line, and it took two wrong readings
 to get right. Verified afterwards, with the project's configuration in hand:
 
-**Identity Platform IS initialized on `dop-qa`** — e-mail/password and
+**Firebase Authentication is configured on `dop-qa`** — e-mail/password and
 `google.com` both enabled — **and IAP authenticated against Google anyway.**
+
+> **Corrected on 2026-09-11, and the correction is the point.** This paragraph
+> used to read *"Identity Platform IS initialized on dop-qa"*. It is not, and it
+> never was. The owner noticed the GCP console still showing the product as
+> disabled and asked why.
+>
+> Firebase Authentication and Identity Platform share one API
+> (`identitytoolkit.googleapis.com`) and one permission namespace
+> (`firebaseauth.*`). Identity Platform is an **enablement on top** of that
+> shared surface, and it is what unlocks multi-tenancy, SAML/OIDC and blocking
+> functions. Reading the shared API as proof of the product's state is the
+> mistake, and this file made it twice.
+>
+> Measured, same project and same token, minutes apart:
+>
+> | call | result |
+> |---|---|
+> | `admin/v2/projects/dop-qa/config` | **200**, the whole configuration |
+> | `v2/projects/dop-qa/tenants` | **400 `INVALID_PROJECT_ID`** |
+> | `v2/projects/620588764334/tenants` | **400 `INVALID_PROJECT_ID`** |
+>
+> The project exists for Firebase Auth and does not exist for the Tenant
+> Management service. The evidence was in this file the whole time and unread:
+> the config comes back with `"multiTenant": {}` — empty, not absent.
 
 That is the finding, and it is stronger than either earlier version. IAP does not
 inherit the project's identity configuration. Using the product's own identities
