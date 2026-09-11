@@ -240,3 +240,39 @@ resource "google_cloud_run_v2_service" "api" {
 
   depends_on = [google_project_service.this]
 }
+
+// The BFF under our own name.
+//
+// A mapping and not a Firebase Hosting rewrite, which would have skipped the
+// Search Console step by reusing the TXT verification that auth.qa.dop-t.com
+// already passed. The reason is the attention stream: the BFF answers
+// `/api/v1/stream/attention` with Server-Sent Events, and Firebase Hosting
+// buffers responses and cuts them at 60 seconds. The stream would die every
+// minute — an intermittent bug nobody would connect back to a DNS decision.
+//
+// Guarded by the variable so the plan stays clean until the domain is verified:
+// Cloud Run refuses the mapping outright otherwise, and refuses it at APPLY
+// time, which would turn every unrelated apply into a failure.
+resource "google_cloud_run_domain_mapping" "api" {
+  count = var.api_custom_domain == "" ? 0 : 1
+
+  project  = var.project
+  location = var.region
+  name     = var.api_custom_domain
+
+  metadata {
+    namespace = var.project
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.api.name
+  }
+}
+
+output "api_dns_records" {
+  description = "What to put in the DNS once the mapping exists. Empty until api_custom_domain is set."
+  value = var.api_custom_domain == "" ? [] : [
+    for r in google_cloud_run_domain_mapping.api[0].status[0].resource_records :
+    "${r.type} ${r.name} -> ${r.rrdata}"
+  ]
+}

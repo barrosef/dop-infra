@@ -44,3 +44,9 @@ variable "onesignal_app_id" {
   default     = ""
   description = "The OneSignal application id. Public by design (it ships in the client SDKs); an empty value leaves the mailer in dry run, which renders and logs instead of sending."
 }
+
+variable "api_custom_domain" {
+  type        = string
+  default     = ""
+  description = "The BFF's own hostname (api.qa.dop-t.com). Empty leaves the service on its run.app URL. Setting it requires the domain to be verified in Search Console FOR THE ACCOUNT RUNNING TERRAFORM — Cloud Run refuses the mapping otherwise, and the error names the verified domains it does know."
+}
