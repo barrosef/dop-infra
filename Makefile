@@ -28,7 +28,7 @@ APP_AUTH_BASE := http://auth.localtest.me:8080
 # Deployment's `image:`.
 DEVBOX_TAG := 0.1.3
 RUNNER_TAG := 0.1.0
-CORE_TAG := 0.1.0-14
+CORE_TAG := 0.1.0-15
 API_TAG  := 0.1.0-7
 
 .PHONY: image-devbox image-runner guard up down reset status logs ui cluster-up cluster-stop cluster-rm \
