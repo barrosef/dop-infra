@@ -23,6 +23,13 @@ api_custom_domain = "api.qa.dop-t.com"
 # handler is served on this domain too.
 firebase_auth_domain = "auth.qa.dop-t.com"
 
+# The sender. It MUST be on the domain authenticated at the provider
+# (mail.qa.dop-t.com on OneSignal — SPF, DKIM, DMARC): a provider refuses, or
+# quietly junks, mail from an address it cannot vouch for. Left unset, the core
+# falls back to noreply@dop.local, which is a domain that does not exist.
+mail_from      = "noreply@mail.qa.dop-t.com"
+mail_from_name = "DOP"
+
 # The OneSignal application. This id is NOT a credential — OneSignal ships it
 # inside every client SDK, web and mobile — so it lives here like any other
 # environment fact. The REST key is a credential and lives in Secret Manager;

@@ -56,3 +56,14 @@ variable "firebase_auth_domain" {
   default     = ""
   description = "The host the BFF rewrites e-mail action links to. Must serve /__/auth/action — a Firebase Hosting custom domain of the same project does. Empty leaves links on <project>.firebaseapp.com."
 }
+
+variable "mail_from" {
+  type        = string
+  default     = ""
+  description = "The From address of every message the core sends. Must be on the domain authenticated at the mail provider; empty falls back to the core's noreply@dop.local, which is a domain that does not exist."
+}
+
+variable "mail_from_name" {
+  type    = string
+  default = "DOP"
+}

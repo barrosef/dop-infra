@@ -106,6 +106,14 @@ resource "google_cloud_run_v2_service" "core" {
         name  = "ONESIGNAL_APP_ID"
         value = var.onesignal_app_id
       }
+      env {
+        name  = "MAIL_FROM"
+        value = var.mail_from
+      }
+      env {
+        name  = "MAIL_FROM_NAME"
+        value = var.mail_from_name
+      }
       # Cloud Run's filesystem is read-only except /tmp. ADR-0028's git server
       # needs somewhere to write, and on this instance it is scratch: the
       # durable copy lives on the data VM's worker.
