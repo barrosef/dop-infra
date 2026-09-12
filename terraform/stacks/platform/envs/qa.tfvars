@@ -13,6 +13,10 @@ data_vm_internal_ip = "10.128.0.2"
 # enough to reach anybody.
 mail_backend = "onesignal"
 
+# The BFF under its own name. Needs dop-t.com verified for the account running
+# Terraform — it is, since Firebase Hosting's verification propagated.
+api_custom_domain = "api.qa.dop-t.com"
+
 # The OneSignal application. This id is NOT a credential — OneSignal ships it
 # inside every client SDK, web and mobile — so it lives here like any other
 # environment fact. The REST key is a credential and lives in Secret Manager;
