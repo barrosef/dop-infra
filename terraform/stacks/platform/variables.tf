@@ -67,3 +67,9 @@ variable "mail_from_name" {
   type    = string
   default = "DOP"
 }
+
+variable "mail_reply_to" {
+  type        = string
+  default     = ""
+  description = "Reply-To of every message the core sends. A real, read inbox — the sender is a noreply."
+}

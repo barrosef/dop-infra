@@ -2,7 +2,7 @@ project = "dop-qa"
 region  = "us-central1"
 zone    = "us-central1-a"
 
-core_image_tag = "0.1.0-17"
+core_image_tag = "0.1.0-18"
 api_image_tag  = "0.1.0-10"
 
 data_vm_internal_ip = "10.128.0.2"
@@ -29,6 +29,10 @@ firebase_auth_domain = "auth.qa.dop-t.com"
 # falls back to noreply@dop.local, which is a domain that does not exist.
 mail_from      = "noreply@mail.qa.dop-t.com"
 mail_from_name = "DOP"
+# Where a person's answer lands. The sender is a noreply on purpose; without
+# this, a reply to the verification e-mail — usually a request for help — goes
+# nowhere and nobody ever reads it.
+mail_reply_to = "ed.barros@digitalbusinessone.com"
 
 # The OneSignal application. This id is NOT a credential — OneSignal ships it
 # inside every client SDK, web and mobile — so it lives here like any other
