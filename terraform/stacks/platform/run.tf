@@ -227,6 +227,10 @@ resource "google_cloud_run_v2_service" "api" {
         value = jsonencode(var.cors_origins)
       }
       env {
+        name  = "FIREBASE_AUTH_DOMAIN"
+        value = var.firebase_auth_domain
+      }
+      env {
         name = "CALL_AUTH_KEY"
         value_source {
           secret_key_ref {

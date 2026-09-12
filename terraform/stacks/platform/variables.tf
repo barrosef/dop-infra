@@ -50,3 +50,9 @@ variable "api_custom_domain" {
   default     = ""
   description = "The BFF's own hostname (api.qa.dop-t.com). Empty leaves the service on its run.app URL. Setting it requires the domain to be verified in Search Console FOR THE ACCOUNT RUNNING TERRAFORM — Cloud Run refuses the mapping otherwise, and the error names the verified domains it does know."
 }
+
+variable "firebase_auth_domain" {
+  type        = string
+  default     = ""
+  description = "The host the BFF rewrites e-mail action links to. Must serve /__/auth/action — a Firebase Hosting custom domain of the same project does. Empty leaves links on <project>.firebaseapp.com."
+}

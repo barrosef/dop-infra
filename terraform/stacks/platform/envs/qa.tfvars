@@ -3,7 +3,7 @@ region  = "us-central1"
 zone    = "us-central1-a"
 
 core_image_tag = "0.1.0-17"
-api_image_tag  = "0.1.0-9"
+api_image_tag  = "0.1.0-10"
 
 data_vm_internal_ip = "10.128.0.2"
 
@@ -16,6 +16,12 @@ mail_backend = "onesignal"
 # The BFF under its own name. Needs dop-t.com verified for the account running
 # Terraform — it is, since Firebase Hosting's verification propagated.
 api_custom_domain = "api.qa.dop-t.com"
+
+# Where the e-mail action links point. Firebase mints them on
+# dop-qa.firebaseapp.com and refuses to let this project change that
+# (EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED); the BFF rewrites the host, because the
+# handler is served on this domain too.
+firebase_auth_domain = "auth.qa.dop-t.com"
 
 # The OneSignal application. This id is NOT a credential — OneSignal ships it
 # inside every client SDK, web and mobile — so it lives here like any other
