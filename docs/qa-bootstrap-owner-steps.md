@@ -124,7 +124,7 @@ setting is on.
 
 ## 5. Create the GitHub OAuth App
 
-**Console:** https://github.com/organizations/Digital-Business-One/settings/applications
+**Console:** https://github.com/settings/developers
 → **New OAuth App**
 
 It must be an **OAuth App**, not a **GitHub App**. They are different products
