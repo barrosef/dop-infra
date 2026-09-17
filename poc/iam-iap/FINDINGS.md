@@ -31,7 +31,7 @@ Redeployed with a dedicated service account and nothing else:
 **Consequence for the real environment:** every Cloud Run service gets its own
 service account. Running on the default one would leave the IAM boundary drawn
 on paper and open in practice — the same failure the NetworkPolicy had, which is
-what [ADR-0022](../../../../docs/adr/0016-the-core-verifies-its-callers.md) was
+what [ADR-0022](../../../../docs/adr/0022-the-core-verifies-its-callers.md) was
 written about.
 
 **IAM propagation took about a minute.** Long enough to look like a broken
