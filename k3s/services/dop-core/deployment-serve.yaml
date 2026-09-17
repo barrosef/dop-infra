@@ -1,5 +1,5 @@
-# The serve mode — the domain's gRPC surface (ADR-0016), and the host of the
-# projects' root repositories (ADR-0028): git's smart HTTP hangs off the same
+# The serve mode — the domain's gRPC surface (ADR-0012), and the host of the
+# projects' root repositories (ADR-0021): git's smart HTTP hangs off the same
 # 9091 the health check does, because the sandboxes' egress allowlist names one
 # address.
 apiVersion: apps/v1

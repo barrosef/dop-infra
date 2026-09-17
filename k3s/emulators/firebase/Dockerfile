@@ -1,6 +1,6 @@
 # There is no official image of the Firebase Emulator Suite.
 # We build our own with PINNED versions — consistent with the project's supply
-# chain stance (ADR-0020).
+# chain stance (ADR-0015).
 FROM node:22-alpine
 
 ARG FIREBASE_TOOLS_VERSION=14.24.0

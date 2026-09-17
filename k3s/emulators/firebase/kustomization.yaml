@@ -4,7 +4,7 @@ resources:
   - statefulset.yaml
   - service.yaml
   - ingress.yaml
-# ADR-0020 §3: the emulator's config is the SAME as the deployment's — files
+# ADR-0015 §3: the emulator's config is the SAME as the deployment's — files
 # versioned in the repository, mounted read-only. An emulator with a config of
 # its own lies about production.
 configMapGenerator:

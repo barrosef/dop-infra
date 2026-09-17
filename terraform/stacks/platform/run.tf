@@ -8,7 +8,7 @@ locals {
 
 # ── The core: private, and private by IAM rather than by network ─────────────
 #
-# ADR-0029. Nothing anonymous reaches it: Cloud Run refuses the request with 403
+# ADR-0022. Nothing anonymous reaches it: Cloud Run refuses the request with 403
 # before this process starts, and the only principal allowed to invoke it is the
 # BFF's service account (identity.tf).
 resource "google_cloud_run_v2_service" "core" {
@@ -89,7 +89,7 @@ resource "google_cloud_run_v2_service" "core" {
         name  = "LOG_LEVEL"
         value = "info"
       }
-      # ADR-0029's destination, not its transition: no valid signature, no actor.
+      # ADR-0022's destination, not its transition: no valid signature, no actor.
       env {
         name  = "CALL_AUTH_MODE"
         value = "strict"
@@ -118,7 +118,7 @@ resource "google_cloud_run_v2_service" "core" {
         name  = "MAIL_REPLY_TO"
         value = var.mail_reply_to
       }
-      # Cloud Run's filesystem is read-only except /tmp. ADR-0028's git server
+      # Cloud Run's filesystem is read-only except /tmp. ADR-0021's git server
       # needs somewhere to write, and on this instance it is scratch: the
       # durable copy lives on the data VM's worker.
       env {

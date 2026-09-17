@@ -1,7 +1,7 @@
 #!/bin/sh
 # The sandbox's entrypoint: bring the shelf up, then hand over.
 #
-# The shelf is the project's root repository (ADR-0028), cloned at
+# The shelf is the project's root repository (ADR-0021), cloned at
 # DOP_PROJECT_DIR before anything else runs — from the agent's point of view it
 # was always there. The credential is a FILE, never an environment variable:
 # environ is inherited by every child process, and children here are agent

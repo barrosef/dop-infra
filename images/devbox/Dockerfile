@@ -14,7 +14,7 @@
 #    permission, which is how the arbitrary user manages to write.
 FROM alpine:3.22
 
-# git is what brings the shelf in and takes the agent's commits out (ADR-0028);
+# git is what brings the shelf in and takes the agent's commits out (ADR-0021);
 # the rest is what a developer expects at a shell.
 RUN apk add --no-cache git bash curl ca-certificates
 

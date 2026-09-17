@@ -15,7 +15,7 @@ The middle row is the problem. `dop-database-url` is in reach of the BFF's
 identity, and [AGENTS.md](../../../AGENTS.md) invariant 2 says the BFF has no
 database and no secret. Nothing in the BFF reads it — the violation is in what
 the grant *permits*, not in what the code *does*, and that distinction is
-exactly the one ADR-0029 was written about after the NetworkPolicy.
+exactly the one ADR-0022 was written about after the NetworkPolicy.
 
 It is codified as it is, in `terraform/stacks/platform/secrets.tf`, so that
 `terraform plan` is a faithful no-op against the live environment. Describing

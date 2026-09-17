@@ -2,7 +2,7 @@
 #
 # The core trusts what comes in the metadata (`x-actor-id`, `x-account-id`): the
 # one that authenticates is the BFF, and the core assumes only it calls
-# (ADR-0016). That is a reasonable decision, but it only holds if "only it
+# (ADR-0012). That is a reasonable decision, but it only holds if "only it
 # calls" is TRUE.
 #
 # Without this policy it was not. Verified with a loose pod in the namespace: it
@@ -38,7 +38,7 @@ spec:
     # container of ours beside the agent, pushing the demand's consumption.
     #
     # Opening 9090 to a namespace where agent code runs would have been
-    # unthinkable yesterday. It is acceptable TODAY because of ADR-0029:
+    # unthinkable yesterday. It is acceptable TODAY because of ADR-0022:
     # reaching the port no longer means being believed — without a signature
     # the call arrives with no actor, and the collector's key opens exactly one
     # service. The policy narrows who may knock; the signature decides who is
@@ -55,7 +55,7 @@ spec:
 ---
 # Postgres is even more sensitive: whoever reaches it does not even need to
 # forge an actor, they read everything directly. Only the core talks to it — the
-# BFF has NO database (ADR-0016), and this policy is that rule becoming a block
+# BFF has NO database (ADR-0012), and this policy is that rule becoming a block
 # rather than discipline.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

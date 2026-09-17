@@ -20,9 +20,9 @@ locals {
   secrets = [
     "dop-database-url",      # the core's connection string
     "dop-postgres-password", # read at boot by the data VM
-    "dop-call-auth-key-bff", # ADR-0029: the key the BFF signs its assertions with
+    "dop-call-auth-key-bff", # ADR-0022: the key the BFF signs its assertions with
     "dop-call-auth-key-collector",
-    "dop-project-repo-key", # ADR-0028: the project-knowledge git server
+    "dop-project-repo-key", # ADR-0021: the project-knowledge git server
     "dop-project-repo-admin-key",
     "dop-onesignal-api-key", # the REST credential of the e-mail channel
   ]

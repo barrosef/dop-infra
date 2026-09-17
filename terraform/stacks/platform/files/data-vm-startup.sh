@@ -85,7 +85,7 @@ docker run -d --name nats --restart=always --network=host \
 # and is not.
 docker rm -f dop-worker 2>/dev/null || true
 # The git root is a mounted volume, not the container's filesystem: the worker
-# runs the project-knowledge git server (ADR-0028) and needs somewhere durable
+# runs the project-knowledge git server (ADR-0021) and needs somewhere durable
 # to write. Without the mount it starts, tries to create its root and dies.
 docker run -d --name dop-worker --restart=always --network=host --memory=160m \
   -v /var/lib/dop/git:/var/lib/dop \

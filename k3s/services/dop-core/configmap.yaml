@@ -1,4 +1,4 @@
-# The environment common to the core's FOUR modes (ADR-0016): one image, one set
+# The environment common to the core's FOUR modes (ADR-0012): one image, one set
 # of variables, the mode in the argument. Diverging the configuration per mode is
 # how a worker ends up talking to a different database from serve.
 apiVersion: v1
@@ -20,7 +20,7 @@ data:
   # failure shows up on the first credential somebody tries to save.
   # /etc/ssl/certs continuam valendo (Firebase e GCS seguem funcionando).
 
-  # Without this variable a local upload goes to the REAL bucket (ADR-0020 §4).
+  # Without this variable a local upload goes to the REAL bucket (ADR-0015 §4).
   STORAGE_EMULATOR_HOST: http://firebase.dop-local.svc:9199
   # The core verifies the user's token; against the emulator the signature is
   # skipped.
@@ -30,17 +30,17 @@ data:
   FIREBASE_PROJECT: dop-local
 
   LOG_LEVEL: info
-  # The projects' root repositories (ADR-0028). PROJECT_REPO_BASE_URL is the
+  # The projects' root repositories (ADR-0021). PROJECT_REPO_BASE_URL is the
   # address a SANDBOX reaches this server at — it goes into every clone URL, so
   # it has to be resolvable from the sandbox's namespace, not from here.
   PROJECT_REPO_BACKEND: "local"
   PROJECT_REPO_ROOT: "/var/lib/dop/git"
   PROJECT_REPO_BASE_URL: "http://dop-core.dop-local.svc:9091"
-  # The core verifies its own callers (ADR-0029). `strict` here and
+  # The core verifies its own callers (ADR-0022). `strict` here and
   # `permissive` in the code's default: the cluster we run gets the guarantee,
   # and whoever clones the repository still gets a core that comes up.
   CALL_AUTH_MODE: "strict"
-  # The image a VERIFICATION runs in (ADR-0030). It is OURS and it is fat: the
+  # The image a VERIFICATION runs in (ADR-0023). It is OURS and it is fat: the
   # toolchains live here so a build from source is fast, and no image of the
   # customer's project is ever built or pushed.
   RUNNER_IMAGE: "dop-registry:5000/dop/runner:0.1.0"

@@ -5,7 +5,7 @@
 # roles/run.admin — and run.admin contains run.invoker. The BFF could then call
 # the core not because it was allowed to call THAT service, but because it was
 # allowed to invoke EVERYTHING. The IAM boundary reads as drawn and is open in
-# practice, which is exactly the failure ADR-0029 was written about.
+# practice, which is exactly the failure ADR-0022 was written about.
 locals {
   workload_sa_ids = ["dop-core-sa", "dop-api-sa", "dop-vm"]
   # Deterministic from the project id, so import blocks can name them without

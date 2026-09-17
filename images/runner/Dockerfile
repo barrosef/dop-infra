@@ -1,4 +1,4 @@
-# The image a VERIFICATION runs in (ADR-0030).
+# The image a VERIFICATION runs in (ADR-0023).
 #
 # It is the opposite animal from the devbox. The devbox stays up waiting for the
 # agent's commands; this one runs ONE script — clone, build, start, check — and

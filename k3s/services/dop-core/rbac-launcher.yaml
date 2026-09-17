@@ -27,7 +27,7 @@ rules:
     resources: ["namespaces"]
     verbs: ["create", "get", "delete"]
   # The sandbox's execution and the log tail. The runner uses the same three:
-  # its pod IS the run, and its log is the run's record (ADR-0030).
+  # its pod IS the run, and its log is the run's record (ADR-0023).
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["create", "get", "delete"]

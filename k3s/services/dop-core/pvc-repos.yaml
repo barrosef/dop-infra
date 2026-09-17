@@ -1,4 +1,4 @@
-# The projects' root repositories (ADR-0028).
+# The projects' root repositories (ADR-0021).
 #
 # ReadWriteOnce is enough and is the point: only the `serve` mode writes here —
 # the sandboxes reach the repositories over git's smart HTTP, never through a

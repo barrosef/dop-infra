@@ -1,4 +1,4 @@
-# The BFF has no database (ADR-0016): no Postgres credential here, not even
+# The BFF has no database (ADR-0012): no Postgres credential here, not even
 # "just for a quick query". All state comes from the core over gRPC.
 apiVersion: v1
 kind: ConfigMap
@@ -10,7 +10,7 @@ data:
 
   FIREBASE_AUTH_EMULATOR_HOST: firebase.dop-local.svc:9099
   # O SDK do Cloud Storage lê STORAGE_EMULATOR_HOST; o CLI do Firebase expõe
-  # this one. The bridge between the two is made at the BFF's boot (ADR-0020 §4)
+  # this one. The bridge between the two is made at the BFF's boot (ADR-0015 §4)
   # — without it, a local upload would go to the REAL bucket.
   FIREBASE_STORAGE_EMULATOR_HOST: firebase.dop-local.svc:9199
   FIREBASE_PROJECT: dop-local
@@ -27,7 +27,7 @@ data:
   CORS_ORIGINS: '["http://localhost:5173","http://app.localtest.me:8080"]'
 
   LOG_LEVEL: info
-  # The key the edge signs its assertions to the core with (ADR-0029). It has to
+  # The key the edge signs its assertions to the core with (ADR-0022). It has to
   # be the SAME value the core reads as CALL_AUTH_KEY_BFF — a mismatch makes
   # every call arrive with no actor, and the core is in `strict`.
   #

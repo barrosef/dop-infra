@@ -103,7 +103,7 @@ image-devbox:                 ## the image of the sandbox where the agent works
 	docker build -t $(REGISTRY)/dop/devbox:$(DEVBOX_TAG) $(CURDIR)/images/devbox
 	docker push $(REGISTRY)/dop/devbox:$(DEVBOX_TAG)
 
-image-runner:                 ## the image a verification runs in (ADR-0030)
+image-runner:                 ## the image a verification runs in (ADR-0023)
 	docker build -t $(REGISTRY)/dop/runner:$(RUNNER_TAG) $(CURDIR)/images/runner
 	docker push $(REGISTRY)/dop/runner:$(RUNNER_TAG)
 

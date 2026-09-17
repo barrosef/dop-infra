@@ -11,7 +11,7 @@ spec:
     metadata:
       labels: { app: firebase }
     spec:
-      # ADR-0020 §2: time for the --export-on-exit to finish.
+      # ADR-0015 §2: time for the --export-on-exit to finish.
       # Without it the SIGKILL arrives before the export and the data is lost ON
       # SHUTDOWN.
       terminationGracePeriodSeconds: 45
@@ -22,7 +22,7 @@ spec:
         - name: firebase
           image: dop-registry:5000/dop/firebase-emulators:14.24.0-2
           workingDir: /app
-          # ADR-0020 §2: --import is CONDITIONAL — passing the flag without the
+          # ADR-0015 §2: --import is CONDITIONAL — passing the flag without the
           # directory existing makes the emulator fail on the first start.
           command: ["/bin/bash", "-c"]
           args:
