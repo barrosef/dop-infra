@@ -3,6 +3,8 @@
 The DOP platform's infrastructure: Terraform (QA/stage/prod) and the local k3d
 environment.
 
+Part of the [DOP platform](https://dop-t.com) — what it is, how it is built and where it stands: **[dop-t.com](https://dop-t.com)**.
+
 > **State:** the local environment works; Terraform is structured, with no
 > resources yet. Spec: `docs/superpowers/specs/dop-infra.md` in the
 > meta-repository.
