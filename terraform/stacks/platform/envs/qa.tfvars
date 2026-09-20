@@ -2,8 +2,8 @@ project = "dop-qa"
 region  = "us-central1"
 zone    = "us-central1-a"
 
-core_image_tag = "0.1.0-18"
-api_image_tag  = "0.1.0-10"
+core_image_tag = "0.1.0-21"
+api_image_tag  = "0.1.0-12"
 
 data_vm_internal_ip = "10.128.0.2"
 
