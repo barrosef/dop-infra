@@ -23,7 +23,7 @@ spec:
             - { name: data,   mountPath: /data }
           resources:
             requests: { memory: "48Mi",  cpu: "50m" }
-            limits:   { memory: "256Mi", cpu: "500m" }
+            limits:   { memory: "512Mi", cpu: "500m" }
           readinessProbe:
             httpGet: { path: /healthz, port: 8222 }
             initialDelaySeconds: 3

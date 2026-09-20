@@ -89,6 +89,16 @@ resource "google_cloud_run_v2_service" "core" {
         name  = "LOG_LEVEL"
         value = "info"
       }
+      # Traces to Cloud Trace (ADR-0024 §4). The ratio is parent-based: a
+      # request sampled at the edge is sampled all the way down.
+      env {
+        name  = "TRACE_BACKEND"
+        value = "gcp"
+      }
+      env {
+        name  = "TRACE_SAMPLE_RATIO"
+        value = var.trace_sample_ratio
+      }
       # ADR-0022's destination, not its transition: no valid signature, no actor.
       env {
         name  = "CALL_AUTH_MODE"
@@ -233,6 +243,16 @@ resource "google_cloud_run_v2_service" "api" {
       env {
         name  = "LOG_LEVEL"
         value = "info"
+      }
+      # Traces to Cloud Trace (ADR-0024 §4). The ratio is parent-based: a
+      # request sampled at the edge is sampled all the way down.
+      env {
+        name  = "TRACE_BACKEND"
+        value = "gcp"
+      }
+      env {
+        name  = "TRACE_SAMPLE_RATIO"
+        value = var.trace_sample_ratio
       }
       env {
         name  = "CORS_ORIGINS"

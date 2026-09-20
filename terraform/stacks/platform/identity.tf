@@ -56,6 +56,19 @@ resource "google_project_iam_member" "vm_writes_logs" {
   member  = "serviceAccount:${google_service_account.vm.email}"
 }
 
+// Traces (ADR-0024 §4): the three identities that run our processes write
+// spans to Cloud Trace. Agent, not user — write only.
+resource "google_project_iam_member" "traces" {
+  for_each = {
+    core = google_service_account.core.email
+    api  = google_service_account.api.email
+    vm   = google_service_account.vm.email
+  }
+  project = var.project
+  role    = "roles/cloudtrace.agent"
+  member  = "serviceAccount:${each.value}"
+}
+
 // Minting the verification link (spec SP-0 D-7).
 //
 // A CUSTOM role with one permission, not a predefined one with sixteen.

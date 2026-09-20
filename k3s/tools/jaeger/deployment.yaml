@@ -1,0 +1,33 @@
+# Jaeger, all in one: the local trace backend (ADR-0024 §4). The core and the
+# BFF export OTLP to it; the UI is at http://traces.localtest.me:8080. In-memory
+# storage on purpose — a developer's traces do not outlive the pod, and nothing
+# here is worth a volume.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: dop-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: jaeger }
+  template:
+    metadata:
+      labels: { app: jaeger }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: jaeger
+          image: jaegertracing/jaeger:2.12.0
+          ports:
+            - { name: otlp-grpc, containerPort: 4317 }
+            - { name: otlp-http, containerPort: 4318 }
+            - { name: ui,        containerPort: 16686 }
+          readinessProbe:
+            httpGet: { path: /, port: 16686 }
+            initialDelaySeconds: 5
+          resources:
+            requests: { memory: "128Mi", cpu: "50m" }
+            limits:   { memory: "512Mi", cpu: "500m" }

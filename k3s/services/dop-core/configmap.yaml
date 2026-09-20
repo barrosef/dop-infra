@@ -8,6 +8,11 @@ metadata:
 data:
   NATS_URL: nats://nats.dop-local.svc:4222
 
+  # Traces to the local Jaeger (ADR-0024 §4); everything sampled.
+  TRACE_BACKEND: otlp
+  OTEL_EXPORTER_OTLP_ENDPOINT: jaeger.dop-local.svc:4317
+  TRACE_SAMPLE_RATIO: "1"
+
   # k8s is the backend exercised EVERY DAY locally — there is no GCP Secret
   # Manager emulator, and that is ADR-0001's two-adapter discipline.
   SECRET_BACKEND: k8s

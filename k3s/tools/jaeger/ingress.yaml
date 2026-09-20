@@ -1,0 +1,13 @@
+# Through k3d's load balancer, like the other tools.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jaeger
+  namespace: dop-local
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: traces.localtest.me
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: jaeger, port: { number: 80 } } } }

@@ -73,3 +73,9 @@ variable "mail_reply_to" {
   default     = ""
   description = "Reply-To of every message the core sends. A real, read inbox — the sender is a noreply."
 }
+
+variable "trace_sample_ratio" {
+  description = "Fraction of new traces sampled (ADR-0024 §4); parent-based, so a sampled request stays sampled downstream."
+  type        = string
+  default     = "1"
+}

@@ -4,6 +4,7 @@
 locals {
   services = [
     "artifactregistry.googleapis.com",
+    "cloudtrace.googleapis.com", # the trace backend on GCP (ADR-0024 §4)
     "compute.googleapis.com",
     "iamcredentials.googleapis.com",
     "identitytoolkit.googleapis.com", # Identity Platform and Firebase Auth are the same backend

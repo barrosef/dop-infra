@@ -8,6 +8,12 @@ data:
   # The core's Service; it points only at the serve mode's pods.
   CORE_GRPC: dop-core.dop-local.svc:9090
 
+  # Traces to the local Jaeger (ADR-0024 §4); the same backend as the core, so
+  # a request is ONE trace from the cockpit's call to the consumer.
+  TRACE_BACKEND: otlp
+  OTEL_EXPORTER_OTLP_ENDPOINT: jaeger.dop-local.svc:4317
+  TRACE_SAMPLE_RATIO: "1"
+
   FIREBASE_AUTH_EMULATOR_HOST: firebase.dop-local.svc:9099
   # O SDK do Cloud Storage lê STORAGE_EMULATOR_HOST; o CLI do Firebase expõe
   # this one. The bridge between the two is made at the BFF's boot (ADR-0015 §4)

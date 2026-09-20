@@ -68,6 +68,7 @@ way a real deploy survives.
 | `http://auth.localtest.me:8080` | the Auth emulator |
 | `http://storage.localtest.me:8080` | the Storage emulator |
 | `http://k8s.localtest.me:8080` | Headlamp (token from `make token-ui`) |
+| `http://traces.localtest.me:8080` | Jaeger — one request is one trace, BFF → core → Postgres → consumer (ADR-0024) |
 | `http://localhost:4000` | the emulator UI — **no ingress**, it requires a port-forward |
 
 **This does not replace `pnpm dev`.** The fast loop of whoever is working on the

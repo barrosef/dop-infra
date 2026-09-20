@@ -103,6 +103,7 @@ docker run -d --name dop-worker --restart=always --network=host --memory=160m \
   -e SECRET_BACKEND=gcp \
   -e SECRET_PROJECT="$${PROJECT}" \
   -e GOOGLE_CLOUD_PROJECT="$${PROJECT}" \
+  -e TRACE_BACKEND=gcp \
   "$${AR}/dop-core:$${CORE_TAG}" worker
 
 echo "dop-startup: done"

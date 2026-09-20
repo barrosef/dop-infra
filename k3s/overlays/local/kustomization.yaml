@@ -12,6 +12,8 @@ resources:
   # A tool, not a component of the product: it lives outside `base` on purpose —
   # its ServiceAccount is cluster-admin, and that only holds in this overlay.
   - ../../tools/headlamp
+  # The local trace backend (ADR-0024 §4). A tool for the same reason.
+  - ../../tools/jaeger
 labels:
   - pairs:
       app.kubernetes.io/part-of: dop
