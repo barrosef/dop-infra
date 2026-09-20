@@ -83,7 +83,16 @@ docker run -d --name nats --restart=always --network=host \
 # It consumes events and builds the projection the attention box reads. Without
 # it the API answers 200 with an empty box, which looks like "nothing pending"
 # and is not.
+#
+# It also migrates and seeds the database at boot (ADR-0024): it is the single
+# instance, so it is the one that owns the schema. Cloud Run's `serve` waits
+# for it. The ONE-TIME baseline below records the migrations that were applied
+# by hand before the runner existed; it is a no-op on a database that already
+# has a version table, and refuses an empty one (where `up` is the path).
 docker rm -f dop-worker 2>/dev/null || true
+docker run --rm --network=host \
+  -e DATABASE_URL="postgres://dop:$${PGPASS}@127.0.0.1:5432/dop?sslmode=disable" \
+  "$${AR}/dop-core:$${CORE_TAG}" migrate baseline 27 2>&1 | grep -v '"level":"info"' || true
 # The git root is a mounted volume, not the container's filesystem: the worker
 # runs the project-knowledge git server (ADR-0021) and needs somewhere durable
 # to write. Without the mount it starts, tries to create its root and dies.

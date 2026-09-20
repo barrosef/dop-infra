@@ -37,6 +37,9 @@ spec:
             # the void.
             - { name: PROJECT_REPO_BACKEND,    value: "remote" }
             - { name: PROJECT_REPO_SERVER_URL, value: "http://dop-core.dop-local.svc:9091" }
+            # The worker migrates and seeds at boot (ADR-0024); the profile
+            # adds the development seeds on top of the root ones.
+            - { name: DOP_SEED_PROFILE,        value: "local" }
           resources:
             requests: { memory: "64Mi",  cpu: "50m" }
             limits:   { memory: "256Mi", cpu: "500m" }
